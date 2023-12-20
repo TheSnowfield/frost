@@ -1,7 +1,7 @@
 ## ❄ Frost OS
 
-Frost OS is a rtos like(not rtos) async multi-task operating system for embedded hardware,
-which supports await/async call any function in async mode, and TLS(Task Local Storage).  
+Frost OS is an async multi-task operating system for embedded hardware,  
+which supports await/async function calling, and TLS(Task Local Storage).
 
 Frost doesn't interrupt the task execution, so it's not a real-time operating system.
 
@@ -9,7 +9,10 @@ It owns an advanced task scheduler that can run two task types:
  - **one shot**: task runs one shot, then deletes itself
  - **periodic**: task runs periodically, with a given period (setInterval)
 
-It also supported a Golang-like "channel" feature which be used to communicate between tasks.
+It also supported a Golang-like "channel" feature which be used to communicate between tasks. (WIP)
+
+[![frost](https://img.shields.io/badge/Frost%20OS-v0.1-68e8fd)](#)
+[![license](https://img.shields.io/badge/LICENSE-MIT-blue)](./blob/main/LICENSE)
 
 ## ❄ Example
 
@@ -54,7 +57,7 @@ uint64_t __frost_time_tick(uint64_t* tick) {
 }
 ```
 
-And markup `FROST_PORTED_LOG_PRINT` and `FROST_PORTED_TIME_TICK` before you include the Frost header.  
+And markup `FROST_PORTED_LOG_PRINT` and `FROST_PORTED_TIME_TICK` before you include the Frost header.   
 See more in [frost/port.h](frost/port.h)
 
 ## ❄ LICENSE
