@@ -21,6 +21,6 @@ typedef enum {
   frost_err_need_initialize        = -6,
 } frost_errcode_t;
 
-#define frost_ok(setresult, x) (((setresult) = (x)) == frost_err_ok)
+#define frost_ok(x) ((x) == frost_err_ok)
 
 #endif /* _FROST_COMMON_H */

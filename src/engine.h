@@ -41,7 +41,6 @@ typedef void (* frost_callback_arg15_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 #endif
 
 typedef enum {
-  frost_flag_running = 0,
   frost_flag_suspend = 1,
 } frost_flag_t;
 
@@ -50,11 +49,11 @@ typedef struct _frost_awaiter_t {
   frost_handle_t result;
   frost_errcode_t status;
   uint64_t timeout;
-} frost_task_awaiter_t;
+} frost_awaiter_t;
 
 typedef struct _frost_tls_t {
   size_t table[TLS_SIZE];
-} frost_task_tls_t;
+} frost_tls_t;
 
 typedef struct {
   uint32_t argc;
@@ -65,8 +64,8 @@ typedef struct _frost_ctx_t {
   list_node_t* ref;
   const char* name;
   frost_args_t args;
-  frost_task_tls_t* tls;
-  frost_task_awaiter_t* awaiter;
+  frost_tls_t* tls;
+  frost_awaiter_t* awaiter;
   frost_callback_t callback;
   frost_flag_t flags;
   uint32_t interval;
@@ -131,10 +130,10 @@ frost_errcode_t frost_task_get_context(frost_task_ctx_t** task);
  * @brief run a task async
  *
  * @param func task callback
- * @return frost_task_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
+ * @return frost_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
  */
-// frost_task_awaiter_t* frost_task_run(task_callback_t func);
-frost_task_awaiter_t* frost_task_run(void* func);
+// frost_awaiter_t* frost_task_run(task_callback_t func);
+frost_awaiter_t* frost_task_run(void* func);
 
 /**
  * @brief run a task async
@@ -142,19 +141,19 @@ frost_task_awaiter_t* frost_task_run(void* func);
  * @param func task callback
  * @param argc argument count for task
  * @param ... arguments
- * @return frost_task_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
+ * @return frost_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
 */
-frost_task_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...);
+frost_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...);
 
 /**
  * @brief set task interval
  *
- * @param func task callback
  * @param interval interval in milliseconds
+ * @param func task callback
  * @param task pointer to task context
  * @return frost_errcode_t if success return ok
 */
-frost_errcode_t frost_task_interval(void* func, uint32_t interval, frost_task_ctx_t** task);
+frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ctx_t** task);
 
 /**
  * @brief delete a task
@@ -163,5 +162,23 @@ frost_errcode_t frost_task_interval(void* func, uint32_t interval, frost_task_ct
  * @return frost_errcode_t if success return ok
 */
 frost_errcode_t frost_task_delete(frost_task_ctx_t* task);
+
+/**
+ * @brief set task flag
+ *
+ * @param task pointer to task context
+ * @param flag the flag to set
+ * @return frost_errcode_t if success return ok
+ */
+frost_errcode_t frost_task_set_flag(frost_task_ctx_t* task, frost_flag_t flag);
+
+/**
+ * @brief get task flags
+ *
+ * @param task pointer to task context
+ * @param flag the flag to get
+ * @return frost_flag_t
+ */
+frost_errcode_t frost_task_get_flag(frost_task_ctx_t* task, frost_flag_t* flag);
 
 #endif /* _FROST_ENGINE_H */

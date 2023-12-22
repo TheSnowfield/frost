@@ -15,7 +15,7 @@ int main() {
 
   // initialization okay, run tasks
   frost_errcode_t _result = frost_err_ok;
-  while (frost_ok(_result, _result = frost_schedule_tasks())) {
+  while (frost_ok(_result = frost_schedule_tasks())) {
     // schedule the tasks
   }
 

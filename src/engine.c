@@ -15,7 +15,7 @@ frost_errcode_t frost_init() {
   frost_errcode_t _result;
 
   // create task list
-  if(!frost_ok(_result, list_create(&engine.scheduler.tasks))) {
+  if(!frost_ok(_result = list_create(&engine.scheduler.tasks))) {
     frost_log(TAG, "go to failure procedure");
     frost_uninit();
     return frost_err_fatal_error;
@@ -64,11 +64,11 @@ frost_errcode_t frost_schedule_tasks() {
 
       // do not invoke itself
       if(engine.scheduler.context == _curctx)
-        continue;
+        goto next;
 
       // do not invoke suspended task
       else if (_curctx->flags & frost_flag_suspend)
-        continue;
+        goto next;
 
       // get current tick time
       engine.scheduler.tick = __frost_time_tick(NULL);
@@ -111,6 +111,7 @@ frost_errcode_t frost_schedule_tasks() {
     }
 
     // next task
+    next:
     _node = _node->next;
   }
 
@@ -131,13 +132,13 @@ frost_errcode_t frost_task_get_context(frost_task_ctx_t** task) {
   return frost_err_ok;
 }
 
-frost_task_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
+frost_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
 
   if(!engine.initialized)
     return awaiter_from_value(NULL, frost_err_need_initialize);
 
   // create an awaiter for task
-  frost_task_awaiter_t* _awaiter = awaiter_create(); {
+  frost_awaiter_t* _awaiter = awaiter_create(); {
     if(_awaiter == NULL) return awaiter_from_value(NULL, frost_err_out_of_memory);
   }
 
@@ -175,7 +176,7 @@ frost_task_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
   frost_errcode_t _result;
 
   // append new task to scheduler
-  if(!frost_ok(_result, list_put(engine.scheduler.tasks, &_task_ptr,
+  if(!frost_ok(_result = list_put(engine.scheduler.tasks, &_task_ptr,
      sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
     free(_task);
     awaiter_destroy(_awaiter);
@@ -191,11 +192,11 @@ frost_task_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
 
 }
 
-frost_task_awaiter_t* frost_task_run(void* func) {
+frost_awaiter_t* frost_task_run(void* func) {
   return frost_task_run_ex(func, 0);
 }
 
-frost_errcode_t frost_task_interval(void* func, uint32_t interval, frost_task_ctx_t** task) {
+frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ctx_t** task) {
 
   if(!engine.initialized)
     return frost_err_need_initialize;
@@ -221,7 +222,7 @@ frost_errcode_t frost_task_interval(void* func, uint32_t interval, frost_task_ct
   frost_errcode_t _result;
 
   // append new task to scheduler
-  if(!frost_ok(_result, list_put(engine.scheduler.tasks, &_task_ptr,
+  if(!frost_ok(_result = list_put(engine.scheduler.tasks, &_task_ptr,
      sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
     free(_task);
     return _result;
@@ -248,7 +249,7 @@ frost_errcode_t frost_task_delete(frost_task_ctx_t* task) {
   frost_errcode_t _result;
 
   // remove task from scheduler
-  if(!frost_ok(_result, list_delete(engine.scheduler.tasks, task->ref))) {
+  if(!frost_ok(_result = list_delete(engine.scheduler.tasks, task->ref))) {
     return _result;
   }
 
@@ -290,5 +291,27 @@ frost_errcode_t frost_task_delete(frost_task_ctx_t* task) {
   frost_log(TAG, "mark scheduler context as 'dirty' state");
   frost_log(TAG, "current task size => %zu", engine.scheduler.tasks->size);
 
+  return frost_err_ok;
+}
+
+frost_errcode_t frost_task_set_flag(frost_task_ctx_t* task, frost_flag_t flag) {
+
+  if(task == NULL)
+    return frost_err_invalid_parameter;
+  else if(!engine.initialized)
+    return frost_err_need_initialize;
+
+  task->flags = flag;
+  return frost_err_ok;
+}
+
+frost_errcode_t frost_task_get_flag(frost_task_ctx_t* task, frost_flag_t* flag) {
+
+  if(task == NULL || flag == NULL)
+    return frost_err_invalid_parameter;
+  else if(!engine.initialized)
+    return frost_err_need_initialize;
+
+  *flag = task->flags;
   return frost_err_ok;
 }

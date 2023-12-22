@@ -1,8 +1,7 @@
 #include <stdlib.h>
-
-#include <config.h>
 #include <utils/log.h>
 
+#include "common.h"
 #include "engine.h"
 #include "tls.h"
 
@@ -14,7 +13,7 @@ static frost_task_ctx_t* __get_task_ctx(frost_task_ctx_t* task) {
   frost_errcode_t _result;
 
   // get current task context
-  if(!frost_ok(_result, frost_task_get_context(&_task))) {
+  if(!frost_ok(_result = frost_task_get_context(&_task))) {
     log_warning(TAG, "invalid task context");
     return NULL;
   }
@@ -37,14 +36,14 @@ frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
   }
 
   // allocate tls context
-  frost_handle_t _tls = malloc(sizeof(frost_task_tls_t)); {
+  frost_handle_t _tls = malloc(sizeof(frost_tls_t)); {
     
     // if allocation failed, return error
     if(_tls == NULL)
       return frost_err_out_of_memory;
 
     // okay for tls
-    _task->tls = (frost_task_tls_t *)_tls;
+    _task->tls = (frost_tls_t *)_tls;
     log_debug(TAG, "tls[%p] has allocated for task '%s'[%p]", _tls, _task->name, _task);
   }
 
@@ -100,7 +99,7 @@ frost_errcode_t tls_set_value_ex(frost_task_ctx_t* task, uint32_t index, size_t 
   }
 
   // validate arguments
-  if(index > TASK_TLS_SIZE || index < 0)
+  if(index > FROST_TASK_TLS_SIZE || index < 0)
     return frost_err_invalid_parameter;
 
   // setup value
@@ -119,7 +118,7 @@ frost_errcode_t tls_get_value_ex(frost_task_ctx_t* task, uint32_t index, size_t*
   }
 
   // validate arguments
-  if(value == NULL || index > TASK_TLS_SIZE || index < 0)
+  if(value == NULL || index > FROST_TASK_TLS_SIZE || index < 0)
     return frost_err_invalid_parameter;
 
   // read value
