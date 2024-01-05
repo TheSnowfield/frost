@@ -1,25 +1,10 @@
 #include <stdlib.h>
-#include <utils/log.h>
 
 #include "common.h"
 #include "engine.h"
+#include "internal.h"
 #include "tls.h"
-
-static frost_task_ctx_t* __get_task_ctx(frost_task_ctx_t* task) {
-  
-  if(task != NULL) return task;
-
-  frost_task_ctx_t* _task;
-  frost_errcode_t _result;
-
-  // get current task context
-  if(!frost_ok(_result = frost_task_get_context(&_task))) {
-    log_warning(TAG, "invalid task context");
-    return NULL;
-  }
-
-  return _task;
-}
+#include "log.h"
 
 frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
   
@@ -27,11 +12,11 @@ frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
     if(_task == NULL) return frost_err_invalid_parameter;
   }
 
-  log_debug(TAG, "allocating tls for task '%s'[%p]", _task->name, _task);
+  frost_log(TAG, "allocating tls for task '%s'[%p]", _task->name, _task);
 
   // if tls context has been already allocated, skip
   if(_task->tls != NULL) {
-    log_warning(TAG, "this task already allocated tls, skipping");
+    frost_log(TAG, "this task already allocated tls, skipping");
     return frost_err_ok;
   }
 
@@ -44,7 +29,7 @@ frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
 
     // okay for tls
     _task->tls = (frost_tls_t *)_tls;
-    log_debug(TAG, "tls[%p] has allocated for task '%s'[%p]", _tls, _task->name, _task);
+    frost_log(TAG, "tls[%p] has allocated for task '%s'[%p]", _tls, _task->name, _task);
   }
 
   return frost_err_ok;
@@ -62,7 +47,7 @@ frost_errcode_t tls_destroy_ex(frost_task_ctx_t* task) {
   
   // skip if task has no tls allocated
   if(_task->tls == NULL) {
-    log_warning(TAG, "this task has not allocated tls, skipping");
+    frost_log(TAG, "this task has not allocated tls, skipping");
     return frost_err_ok;
   }
 
@@ -71,7 +56,7 @@ frost_errcode_t tls_destroy_ex(frost_task_ctx_t* task) {
     _task->tls = NULL;
   }
 
-  log_debug(TAG, "clearing tls for task '%s'[%p]", _task->name, _task);
+  frost_log(TAG, "clearing tls for task '%s'[%p]", _task->name, _task);
   return frost_err_ok;
 }
 
