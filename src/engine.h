@@ -130,10 +130,10 @@ frost_errcode_t frost_task_get_context(frost_task_ctx_t** task);
  * @brief run a task async
  *
  * @param func task callback
- * @return frost_errcode_t if success return ok
+ * @return frost_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
  */
 // frost_awaiter_t* frost_task_run(task_callback_t func);
-frost_errcode_t frost_task_run(void* func);
+frost_awaiter_t* frost_task_run(void* func);
 
 /**
  * @brief run a task async
@@ -141,9 +141,9 @@ frost_errcode_t frost_task_run(void* func);
  * @param func task callback
  * @param argc argument count for task
  * @param ... arguments
- * @return frost_errcode_t if success return ok
+ * @return frost_awaiter_t* return an awaiter, please call @ref awaiter_destroy() to free it after task done
 */
-frost_errcode_t frost_task_run_ex(void* func, uint32_t argc, ...);
+frost_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...);
 
 /**
  * @brief set task interval

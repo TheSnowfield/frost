@@ -2,9 +2,8 @@
 
 #include "engine.h"
 #include "await.h"
-#include "internal.h"
 
-static frost_awaiter_t* __awaiter_create_ex(bool is_finished,
+static frost_awaiter_t* awaiter_create_ex(bool is_finished,
 frost_handle_t result, frost_errcode_t status) {
 
   // memory allocation failed.. nothing to do. oops
@@ -28,11 +27,11 @@ frost_handle_t result, frost_errcode_t status) {
 }
 
 frost_awaiter_t* awaiter_from_value(frost_handle_t value, frost_errcode_t status) {
-  return __awaiter_create_ex(true, value, status);
+  return awaiter_create_ex(true, value, status);
 }
 
 frost_awaiter_t* awaiter_create() {
-  return __awaiter_create_ex(false, NULL, frost_err_ok);
+  return awaiter_create_ex(false, NULL, frost_err_ok);
 }
 
 frost_errcode_t awaiter_destroy(frost_awaiter_t* awaiter) {
@@ -40,8 +39,8 @@ frost_errcode_t awaiter_destroy(frost_awaiter_t* awaiter) {
   if(awaiter == NULL)
     return frost_err_invalid_parameter;
 
-  free(awaiter);
   frost_log(TAG, "awaiter destroyed %p", awaiter);
+  free(awaiter);
 
   return frost_err_ok;
 }

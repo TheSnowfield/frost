@@ -54,7 +54,6 @@ frost_errcode_t frost_schedule_tasks() {
   if(!engine.initialized)
     return frost_err_need_initialize;
 
-  frost_errcode_t _result;
   size_t _idle_time = 0;
 
   list_node_t* _node = engine.scheduler.tasks->head;
@@ -113,6 +112,7 @@ frost_errcode_t frost_schedule_tasks() {
     // next task
     next:
     _node = _node->next;
+    // if((uint32_t)_node == 0x60606060) while(1);
   }
 
   engine.scheduler.context = NULL;
@@ -132,16 +132,21 @@ frost_errcode_t frost_task_get_context(frost_task_ctx_t** task) {
   return frost_err_ok;
 }
 
-frost_errcode_t frost_task_run_ex(void* func, uint32_t argc, ...) {
+frost_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
 
   if(!engine.initialized)
-    return frost_err_need_initialize;
+    return awaiter_from_value(NULL, frost_err_need_initialize);
+
+  // create an awaiter for task
+  frost_awaiter_t* _awaiter = awaiter_create(); {
+    if(_awaiter == NULL) return awaiter_from_value(NULL, frost_err_out_of_memory);
+  }
 
   // create a new task
   frost_handle_t _task = malloc(sizeof(frost_task_ctx_t)); {
     if(_task == NULL) {
-      frost_log(TAG, "failed to create new task, out of memory");
-      return frost_err_out_of_memory;
+      awaiter_destroy(_awaiter);
+      return awaiter_from_value(NULL, frost_err_out_of_memory);
     }
   }
 
@@ -151,6 +156,7 @@ frost_errcode_t frost_task_run_ex(void* func, uint32_t argc, ...) {
   frost_task_ctx_t* _task_ptr = (frost_task_ctx_t *)_task; {
     memset(_task_ptr, 0x00, sizeof(frost_task_ctx_t));
     _task_ptr->callback = func;
+    _task_ptr->awaiter = _awaiter;
     _task_ptr->refill = false;
     _task_ptr->name = "<async task>";
 
@@ -171,9 +177,10 @@ frost_errcode_t frost_task_run_ex(void* func, uint32_t argc, ...) {
 
   // append new task to scheduler
   if(!frost_ok(_result = list_put(engine.scheduler.tasks, &_task_ptr,
-    sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
+     sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
     free(_task);
-    return _result;
+    awaiter_destroy(_awaiter);
+    return awaiter_from_value(NULL, _result);
   }
 
   // request update scheduler context
@@ -181,10 +188,11 @@ frost_errcode_t frost_task_run_ex(void* func, uint32_t argc, ...) {
   frost_log(TAG, "mark scheduler context as 'dirty' state");
   frost_log(TAG, "current task size => %zu", engine.scheduler.tasks->size);
 
-  return frost_err_ok;
+  return _awaiter;
+
 }
 
-frost_errcode_t frost_task_run(void* func) {
+frost_awaiter_t* frost_task_run(void* func) {
   return frost_task_run_ex(func, 0);
 }
 
@@ -195,10 +203,7 @@ frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ct
 
   // create a new task
   frost_handle_t _task = malloc(sizeof(frost_task_ctx_t)); {
-    if(_task == NULL) {
-      frost_log(TAG, "failed to create new task, out of memory");
-      return frost_err_out_of_memory;
-    }
+    if(_task == NULL) return frost_err_out_of_memory;
   }
 
   frost_log(TAG, "create interval task using callback address"
@@ -218,7 +223,7 @@ frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ct
 
   // append new task to scheduler
   if(!frost_ok(_result = list_put(engine.scheduler.tasks, &_task_ptr,
-      sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
+     sizeof(frost_task_ctx_t *), &_task_ptr->ref))) {
     free(_task);
     return _result;
   }
@@ -274,7 +279,7 @@ frost_errcode_t frost_task_delete(frost_task_ctx_t* task) {
 
     if(!task->tls) {
       frost_log(TAG, "destroying a task that has not destroyed tls storage yet, "
-                     "this may cause a memory leak");
+                       "this may cause a memory leak");
     }
 
     tls_destroy_ex(task);
@@ -282,7 +287,6 @@ frost_errcode_t frost_task_delete(frost_task_ctx_t* task) {
   }
 
   // request update scheduler context
-  free(task);
   engine.scheduler.is_dirty = true;
   frost_log(TAG, "mark scheduler context as 'dirty' state");
   frost_log(TAG, "current task size => %zu", engine.scheduler.tasks->size);

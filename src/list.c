@@ -41,8 +41,8 @@ frost_errcode_t list_destroy(list_ctx_t* ctx) {
   }
 
   // free context
-  free(ctx);
   frost_log(TAG, "chain list destroyed %p", ctx);
+  free(ctx);
 
   return frost_err_ok;
 }
