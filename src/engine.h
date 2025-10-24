@@ -91,6 +91,13 @@ typedef struct {
 frost_errcode_t frost_init();
 
 /**
+ * @brief is ending initialized
+ *
+ * @return initialized return true
+ */
+bool frost_is_initialized();
+
+/**
  * @brief engine uninitialization
  *
  * @return frost_errcode_t if success return ok

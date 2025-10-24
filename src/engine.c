@@ -28,6 +28,10 @@ frost_errcode_t frost_init() {
   return frost_err_ok;
 }
 
+bool frost_is_initialized() {
+  return engine.initialized;
+}
+
 frost_errcode_t frost_uninit() {
 
   // delete all tasks
