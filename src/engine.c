@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: MIT
+/*******************************************************************************
+ * This file is the part of the Frost library
+ *
+ * (C) Copyright 2025 TheSnowfield.
+ *
+ * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
+ ****************************************************************************/
+
 #include <stdarg.h>
 
 #include "engine.h"
@@ -116,7 +125,6 @@ frost_errcode_t frost_schedule_tasks() {
     // next task
     next:
     _node = _node->next;
-    // if((uint32_t)_node == 0x60606060) while(1);
   }
 
   engine.scheduler.context = NULL;

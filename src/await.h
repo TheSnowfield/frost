@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: MIT
+/*******************************************************************************
+ * This file is the part of the Frost library
+ *
+ * (C) Copyright 2025 TheSnowfield.
+ *
+ * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
+ ****************************************************************************/
+
 #ifndef _FROST_AWAIT_H
 #define _FROST_AWAIT_H
 
