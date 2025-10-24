@@ -331,3 +331,7 @@ frost_errcode_t frost_sleep(size_t duration_ms) {
 
   return _ret;
 }
+
+uint64_t frost_get_timetick(uint64_t* tick) {
+  return __frost_time_tick(tick);
+}

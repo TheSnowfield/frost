@@ -196,4 +196,13 @@ frost_errcode_t frost_task_get_flag(frost_task_ctx_t* task, frost_flag_t* flag);
  * @return frost_errcode_t if success return ok
  */
 frost_errcode_t frost_sleep(size_t duration_ms);
+
+/**
+ * @brief get timetick
+ *
+ * @param tick receive the tick value, can be NULL
+ * @return size_t tick value
+ */
+uint64_t frost_get_timetick(uint64_t* tick);
+
 #endif /* _FROST_ENGINE_H */
