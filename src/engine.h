@@ -188,4 +188,12 @@ frost_errcode_t frost_task_set_flag(frost_task_ctx_t* task, frost_flag_t flag);
  */
 frost_errcode_t frost_task_get_flag(frost_task_ctx_t* task, frost_flag_t* flag);
 
+/**
+ * @brief sleep (ms). this function can grab the schedule rights from the main thread,
+ * temporarily schedule another tasks and wait for timeout.
+ *
+ * @param duration_ms duration in millisecond
+ * @return frost_errcode_t if success return ok
+ */
+frost_errcode_t frost_sleep(size_t duration_ms);
 #endif /* _FROST_ENGINE_H */

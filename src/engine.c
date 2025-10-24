@@ -319,3 +319,15 @@ frost_errcode_t frost_task_get_flag(frost_task_ctx_t* task, frost_flag_t* flag) 
   *flag = task->flags;
   return frost_err_ok;
 }
+
+frost_errcode_t frost_sleep(size_t duration_ms) {
+
+  size_t _local_time = __frost_time_tick(NULL);
+  frost_errcode_t _ret = frost_err_ok;
+
+  while(!(__frost_time_tick(NULL) - _local_time >= duration_ms)) {
+    _ret = frost_schedule_tasks();
+  }
+
+  return _ret;
+}
