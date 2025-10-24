@@ -122,7 +122,7 @@ frost_errcode_t frost_get_instance(frost_engine_t** instance);
 /**
  * @brief process tasks
  *
- * @return oricinus_frost_errcode_t if success return ok
+ * @return frost_errcode_t if success return ok
  */
 frost_errcode_t frost_schedule_tasks();
 
