@@ -1,6 +1,6 @@
-## ❄ Frost OS
+## ❄ Frost
 
-Frost OS is an async multi-task operating system for embedded hardware,  
+Frost is an async multi-task operating system for embedded hardware,  
 which supports await/async function calling, and TLS(Task Local Storage).
 
 Frost doesn't interrupt the task execution, so it's not a real-time operating system.
@@ -44,9 +44,9 @@ void loop() {
 
 ```
 
-## ❄ Porting Frost
+## ❄ Porting
 
-Please port below functions to your platform to make Frost work:
+Please port below functions to your platform to work with Frost:
 ```c
 void __frost_log_print(const char* tag, const char* fmt, ...) {
   // Your platform implementation
@@ -57,7 +57,7 @@ uint64_t __frost_time_tick(uint64_t* tick) {
 }
 ```
 
-And markup `FROST_PORTED_LOG_PRINT` and `FROST_PORTED_TIME_TICK` before you include the Frost header.   
+And pass `-DFROST_PORTED_LOG_PRINT` and `-DFROST_PORTED_TIME_TICK` to the compiler.   
 See more in [frost/port.h](frost/port.h)
 
 ## ❄ LICENSE
