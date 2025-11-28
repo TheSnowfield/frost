@@ -13,24 +13,9 @@
 #include "engine.h"
 #include "tls.h"
 #include "log.h"
+#include "utils.h"
 
-static frost_task_ctx_t* __get_task_ctx(frost_task_ctx_t* task) {
-  
-  if(task != NULL) return task;
-
-  frost_task_ctx_t* _task;
-  frost_errcode_t _result;
-
-  // get current task context
-  if(!frost_ok(_result = frost_task_get_context(&_task))) {
-    frost_log(TAG, "invalid task context");
-    return NULL;
-  }
-
-  return _task;
-}
-
-frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
+frost_errcode_t frost_tls_alloc_ex(frost_task_ctx_t* task) {
   
   frost_task_ctx_t* _task = __get_task_ctx(task); {
     if(_task == NULL) return frost_err_invalid_parameter;
@@ -59,11 +44,11 @@ frost_errcode_t tls_alloc_ex(frost_task_ctx_t* task) {
   return frost_err_ok;
 }
 
-frost_errcode_t tls_alloc() {
-  return tls_alloc_ex(NULL);
+frost_errcode_t frost_tls_alloc() {
+  return frost_tls_alloc_ex(NULL);
 }
 
-frost_errcode_t tls_destroy_ex(frost_task_ctx_t* task) {
+frost_errcode_t frost_tls_destroy_ex(frost_task_ctx_t* task) {
 
   frost_task_ctx_t* _task = __get_task_ctx(task); {
     if(_task == NULL) return frost_err_invalid_parameter;
@@ -84,11 +69,11 @@ frost_errcode_t tls_destroy_ex(frost_task_ctx_t* task) {
   return frost_err_ok;
 }
 
-frost_errcode_t tls_destroy() {
-  return tls_destroy_ex(NULL);
+frost_errcode_t frost_tls_destroy() {
+  return frost_tls_destroy_ex(NULL);
 }
 
-bool tls_is_allocated_ex(frost_task_ctx_t* task) {
+bool frost_tls_is_allocated_ex(frost_task_ctx_t* task) {
 
   frost_task_ctx_t* _task = __get_task_ctx(task); {
     if(_task == NULL) return frost_err_invalid_parameter;
@@ -97,18 +82,18 @@ bool tls_is_allocated_ex(frost_task_ctx_t* task) {
   return _task->tls != NULL;
 }
 
-bool tls_is_allocated(frost_task_ctx_t* task) {
-  return tls_is_allocated_ex(NULL);
+bool frost_tls_is_allocated(frost_task_ctx_t* task) {
+  return frost_tls_is_allocated_ex(NULL);
 }
 
-frost_errcode_t tls_set_value_ex(frost_task_ctx_t* task, uint32_t index, size_t value) {
+frost_errcode_t frost_tls_set_value_ex(frost_task_ctx_t* task, uint32_t index, size_t value) {
 
   frost_task_ctx_t* _task = __get_task_ctx(task); {
     if(_task == NULL) return frost_err_invalid_parameter;
   }
 
   // validate arguments
-  if(index > FROST_TASK_TLS_SIZE || index < 0)
+  if(index > FROST_TLS_SIZE || index < 0)
     return frost_err_invalid_parameter;
 
   // setup value
@@ -116,18 +101,18 @@ frost_errcode_t tls_set_value_ex(frost_task_ctx_t* task, uint32_t index, size_t 
   return frost_err_ok;
 }
 
-frost_errcode_t tls_set_value(uint32_t index, size_t value) {
-  return tls_set_value_ex(NULL, index, value);
+frost_errcode_t frost_tls_set_value(uint32_t index, size_t value) {
+  return frost_tls_set_value_ex(NULL, index, value);
 }
 
-frost_errcode_t tls_get_value_ex(frost_task_ctx_t* task, uint32_t index, size_t* value) {
+frost_errcode_t frost_tls_get_value_ex(frost_task_ctx_t* task, uint32_t index, size_t* value) {
 
   frost_task_ctx_t* _task = __get_task_ctx(task); {
     if(_task == NULL) return frost_err_invalid_parameter;
   }
 
   // validate arguments
-  if(value == NULL || index > FROST_TASK_TLS_SIZE || index < 0)
+  if(value == NULL || index > FROST_TLS_SIZE || index < 0)
     return frost_err_invalid_parameter;
 
   // read value
@@ -135,6 +120,6 @@ frost_errcode_t tls_get_value_ex(frost_task_ctx_t* task, uint32_t index, size_t*
   return frost_err_ok;
 }
 
-frost_errcode_t tls_get_value(uint32_t index, size_t* value) {
-  return tls_get_value_ex(NULL, index, value);
+frost_errcode_t frost_tls_get_value(uint32_t index, size_t* value) {
+  return frost_tls_get_value_ex(NULL, index, value);
 }
