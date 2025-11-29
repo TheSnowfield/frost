@@ -22,6 +22,7 @@ typedef struct _list_ctx_t {
   list_node_t* head;
   list_node_t* tail;
   size_t size;
+  bool closed;
 } list_ctx_t;
 
 /**
@@ -31,6 +32,14 @@ typedef struct _list_ctx_t {
  * @return status_t
  */
 frost_errcode_t list_create(list_ctx_t** ctx);
+
+/**
+ * @brief create a new list with a circle type
+ *
+ * @param ctx return list context if success
+ * @return status_t
+ */
+frost_errcode_t list_create_ring(list_ctx_t** ctx);
 
 /**
  * @brief put data into list

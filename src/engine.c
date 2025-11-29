@@ -11,6 +11,7 @@
 
 #include "engine.h"
 #include "tls.h"
+#include "chan.h"
 #include "await.h"
 #include "callback.h"
 
@@ -201,7 +202,6 @@ frost_awaiter_t* frost_task_run_ex(void* func, uint32_t argc, ...) {
   frost_log(TAG, "current task size => %zu", engine.scheduler.tasks->size);
 
   return _awaiter;
-
 }
 
 frost_awaiter_t* frost_task_run(void* func) {
@@ -289,13 +289,22 @@ frost_errcode_t frost_task_delete(frost_task_ctx_t* task) {
   // clean up tls storage
   if(task->tls) {
 
-    if(!task->tls) {
-      frost_log(TAG, "destroying a task that has not destroyed tls storage yet, "
-                       "this may cause a memory leak");
-    }
+    frost_log(TAG, "destroying a task that has not destroyed tls storage yet, "
+                      "this may cause a memory leak");
 
-    tls_destroy_ex(task);
+    frost_tls_destroy_ex(task);
     task->tls = NULL;
+  }
+
+  // clean up channel
+  if(task->chan.ref || task->chan.bind) {
+    frost_log(TAG, "destroying a task that has not destroyed chan yet, "
+                      "this may cause a memory leak");
+
+    // destroy channel with automatic unbind
+    frost_chan_destroy_ex(task);
+    task->chan.ref = NULL;
+    task->chan.bind = NULL;
   }
 
   // request update scheduler context

@@ -38,7 +38,9 @@ typedef void (* frost_callback_arg14_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 typedef void (* frost_callback_arg15_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 #undef T
 
-#define TLS_SIZE 8
+#ifndef FROST_TLS_SIZE
+  #define FROST_TLS_SIZE 8
+#endif
 
 #ifdef _MSC_VER
   #define TAG __FUNCTION__
@@ -51,7 +53,13 @@ typedef void (* frost_callback_arg15_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 
 typedef enum {
   frost_flag_suspend = 1,
+  frost_flag_chan_suspend = 2,
 } frost_flag_t;
+
+typedef enum {
+  frost_chanctl_ok = 0,
+  frost_chanctl_eof = 1,
+} frost_chanctl_t;
 
 typedef struct _frost_awaiter_t {
   bool is_finished;
@@ -60,8 +68,13 @@ typedef struct _frost_awaiter_t {
   uint64_t timeout;
 } frost_awaiter_t;
 
+typedef struct _frost_chan_t {
+  list_node_t* circular;
+  int notify_cnt;
+} frost_chan_t;
+
 typedef struct _frost_tls_t {
-  size_t table[TLS_SIZE];
+  size_t table[FROST_TLS_SIZE];
 } frost_tls_t;
 
 typedef struct {
@@ -79,6 +92,12 @@ typedef struct _frost_ctx_t {
   frost_flag_t flags;
   uint32_t interval;
   uint64_t tick;
+
+  struct {
+    frost_chan_t* ref;
+    list_ctx_t* bind; /* list<frost_chan_t*> */
+  } chan;
+
   bool refill;
 } frost_task_ctx_t;
 

@@ -37,6 +37,21 @@ frost_errcode_t list_create(list_ctx_t** ctx) {
   return frost_err_ok;
 }
 
+frost_errcode_t list_create_ring(list_ctx_t** ctx) {
+  
+  // create list
+  frost_errcode_t _code = frost_err_ok; {
+    _code = list_create(ctx);
+    if(_code != frost_err_ok)
+      return _code;
+  }
+
+  // contact head to tail
+  *ctx->closed = true;
+  *ctx->
+
+}
+
 frost_errcode_t list_destroy(list_ctx_t* ctx) {
   if(ctx == NULL)
     return frost_err_invalid_parameter;
