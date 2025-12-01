@@ -48,7 +48,7 @@ frost_errcode_t rb_create(size_t capacity, size_t blocksz, rb_header_t** rb) {
     if(!_rb_header) return frost_err_out_of_memory;
   }
 
-  size_t _rb_body_length = capacity * blocksz;
+  size_t _rb_body_length = capacity * (sizeof(rb_node_t) + blocksz);
   rb_node_t* _rb_body = (rb_node_t*)malloc(_rb_body_length); {
     if(!_rb_body) {
       free(_rb_header);
@@ -59,13 +59,21 @@ frost_errcode_t rb_create(size_t capacity, size_t blocksz, rb_header_t** rb) {
   memset(_rb_header, 0, sizeof(*_rb_header));
   memset(_rb_body, 0, _rb_body_length);
 
+  #define __rb_slab(body, index, block) \
+    ((rb_node_t*)(((uint8_t*)body) + (index) * (sizeof(rb_node_t)+block)))
+
   // build rb chain
-  rb_node_t* _rb_node_start = _rb_body;
-  rb_node_t* _rb_node_end = _rb_body + capacity; {
+  rb_node_t* _rb_node_start = __rb_slab(_rb_body, 0, blocksz);
+  rb_node_t* _rb_node_end = __rb_slab(_rb_body, capacity - 1, blocksz); {
     _rb_node_end->next = _rb_node_start;
-    for(rb_node_t* i = _rb_node_start; i != _rb_node_end;) {
-      i->next = ++i;
+    for(size_t i = 0; i < capacity; ++i) {
+      rb_node_t* _rb_node = __rb_slab(_rb_body, i, blocksz);
+      _rb_node->next = __rb_slab(_rb_body, i + 1, blocksz);
     }
+
+    // for(rb_node_t* i = _rb_node_start; i + 1 != _rb_node_end; ++i) {
+    //   i->next = i + 1;
+    // }
   }
 
   // build rb header
@@ -76,6 +84,10 @@ frost_errcode_t rb_create(size_t capacity, size_t blocksz, rb_header_t** rb) {
   _rb_header->size = 0;
   _rb_header->capacity = capacity;
   _rb_header->block_size = blocksz;
+
+  if(rb) {
+    *rb = _rb_header;
+  }
 
   return frost_err_ok;
 }
@@ -108,7 +120,7 @@ frost_errcode_t rb_put(rb_header_t* rb, void* data, size_t length) {
   // rb is full (not considering insert)
   // todo: insert
   else if(rb->size >= rb->capacity) {
-    return frost_err_eof;
+    return frost_err_full;
   }
 
   return frost_err_ok;
@@ -120,12 +132,17 @@ frost_errcode_t rb_read(rb_header_t* rb, void* data, size_t* length, size_t* rem
     return frost_err_invalid_parameter;
   }
 
-  // get buffer length
-  if(!data && length) {
-    *length = rb->rb_start->size;
+  // get information
+  if(!data) {
+
+    if(length) {
+      *length = rb->rb_start->size;
+    }
+
     if(remain) {
       *remain = rb->size;
     }
+
     return frost_err_ok;
   }
 

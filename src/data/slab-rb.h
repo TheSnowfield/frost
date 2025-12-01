@@ -16,7 +16,6 @@ typedef struct _rb_node_t {
 
 typedef struct _rb_header_t {
   bool self_increase;
-  rb_node_t* entry;
   rb_node_t* rb_start;
   rb_node_t* rb_end;
   rb_node_t* init_rb_body;
@@ -30,7 +29,7 @@ typedef struct _rb_header_t {
  * @brief create ring buffer
  *
  * @param capacity initialize size
- * @param blocksz block size every node
+ * @param blocksz block size every nodes
  * @param rb ring buffer context
  */
 frost_errcode_t rb_create(size_t capacity, size_t blocksz, rb_header_t** rb);

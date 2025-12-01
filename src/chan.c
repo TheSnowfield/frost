@@ -29,11 +29,22 @@ static frost_errcode_t __chan_pack_retain(chan_pack_t* stack, chan_pack_t** reta
 
   // make a copy
   _retained->__ref_count = 0;
-  _retained->data = (uint8_t*)_retained++;
+  _retained->data = (uint8_t*)(_retained + 1);
   _retained->data_len = stack->data_len;
   memcpy(_retained->data, stack->data, stack->data_len);
 
+  *retained = _retained;
+
   return frost_err_ok;
+}
+
+/**
+ * MARK: __chan_pack_free
+ * @brief free pack
+ * @param retained the retained copy
+ */
+static void __chan_pack_free(chan_pack_t* retained) {
+  if(retained) free(retained);
 }
 
 /**
@@ -80,9 +91,19 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
  */
 frost_errcode_t frost_chan_bind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
 
-  
+  // if not bound yet
+  if(!task_a->chan.bind) {
+    if(!frost_ok(list_create(&task_a->chan.bind))) {
+      return frost_err_out_of_memory;
+    }
+  }
 
-  
+  // add to task bind list
+  if(!frost_ok(list_put(task_a->chan.bind, (void*)&task_b, sizeof(task_b), NULL))) {
+    return frost_err_out_of_memory;
+  }
+
+  return frost_err_ok;
 }
 
 /**
@@ -144,10 +165,18 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       // to write messages
       list_node_t* _node = _task_a->chan.bind->head;
       while(_node) {
-        frost_task_ctx_t* _to_post = (frost_task_ctx_t *)_node->data; {
-          rb_put(_to_post->chan.ref->header, _retained_pack, sizeof(chan_pack_t));
-          ++_to_post->chan.ref->notify_cnt;
-          ++_retained_pack->__ref_count;
+        frost_task_ctx_t* _to_post = *(frost_task_ctx_t **)_node->data; {
+
+          if(frost_ok(rb_put(_to_post->chan.ref->header, (void*)&_retained_pack, sizeof(chan_pack_t*)))) {
+            ++_to_post->chan.ref->notify_cnt;
+            ++_retained_pack->__ref_count;
+          }
+
+          else {
+            __chan_pack_free(_retained_pack);
+            frost_log(TAG, "rb_put failed... consider out of memory? or full");
+            return frost_err_full;
+          }
         }
         _node = _node->next;
       }
@@ -168,9 +197,15 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
         return frost_err_out_of_memory;
       }
 
-      rb_put(_task_b->chan.ref->header, (void*)_retained_pack, sizeof(chan_pack_t*));
-      ++_task_b->chan.ref->notify_cnt;
-      ++_retained_pack->__ref_count;
+      if(frost_ok(rb_put(_task_b->chan.ref->header, (void*)&_retained_pack, sizeof(chan_pack_t*)))) {
+        ++_task_b->chan.ref->notify_cnt;
+        ++_retained_pack->__ref_count;
+      }
+      else {
+        __chan_pack_free(_retained_pack);
+        frost_log(TAG, "rb_put failed... consider out of memory? consider chan is full");
+        return frost_err_full;
+      }
     }
   }
 
@@ -181,8 +216,7 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
  * MARK: frost_chan_read
  * @brief read channel pack
  *
- * @param pack 
- * @return frost_errcode_t 
+ * @param pack the chan_pack_t pointer on the stack
  */
 frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
 
@@ -194,11 +228,51 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
   // no message came in
   if(_task_a->chan.ref->notify_cnt == 0) {
     if(pack != NULL) *pack = NULL;
+    if(ctrl != NULL) *ctrl = frost_chanctl_ok;
+    return frost_err_eof;
+  }
+
+  size_t _length = 0;
+  size_t _remain = 0;
+  chan_pack_t* _pack = NULL;
+
+  // get ring buffer info
+  if(!frost_ok(rb_read(_task_a->chan.ref->header, NULL, &_length, &_remain))) {
+    // todo print something
+    if(pack != NULL) *pack = NULL;
     return frost_err_ok;
   }
 
-  rb_header_t* _header = _task_a->chan.ref->header;
+  // get ting buffer data
+  if(!frost_ok(rb_read(_task_a->chan.ref->header, (void*)&_pack, &_length, &_remain))) {
+    if(pack != NULL) *pack = NULL;
+    return frost_err_fatal_error;
+  }
 
+  // if the ref count is alrady 0, wtf?
+  if(_pack->__ref_count <= 0) {
+    // todo print something
+    return frost_err_fatal_error;
+  }
+
+  if(pack) {
+    *pack = _pack;
+  }
+
+  return frost_err_ok;
+}
+
+frost_errcode_t frost_chan_free_pack(chan_pack_t* pack) {
+  if(!pack) {
+    return frost_err_invalid_parameter;
+  }
+
+  // destroy pack when end of pack lifetime
+  if(--pack->__ref_count <= 0) {
+    __chan_pack_free(pack);
+  }
+
+  return frost_err_ok;
 
 }
 

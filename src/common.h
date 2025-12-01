@@ -30,6 +30,7 @@ typedef enum {
   frost_err_need_initialize        = -6,
   frost_err_invalid_chan           = -7,
   frost_err_eof                    = -8,
+  frost_err_full                   = -8,
 } frost_errcode_t;
 
 #define frost_ok(x) ((x) == frost_err_ok)

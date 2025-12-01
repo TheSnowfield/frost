@@ -70,3 +70,11 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
 frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl);
 
 frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a);
+
+
+/**
+ * @brief free a chan pack after read
+ *
+ * @param pack channel pack
+ */
+frost_errcode_t frost_chan_free_pack(chan_pack_t* pack);

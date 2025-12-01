@@ -38,6 +38,8 @@ frost_errcode_t frost_tls_alloc_ex(frost_task_ctx_t* task) {
 
     // okay for tls
     _task->tls = (frost_tls_t *)_tls;
+    memset(_task->tls, 0, sizeof(frost_tls_t));
+
     frost_log(TAG, "tls[%p] has allocated for task '%s'[%p]", _tls, _task->name, _task);
   }
 
