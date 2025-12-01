@@ -7,11 +7,11 @@
  * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
  ****************************************************************************/
 
- /**
-  * @brief allocate channel
-  *
-  * @param task context
-  */
+/**
+* @brief allocate channel
+*
+* @param task context
+*/
 frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task);
 frost_errcode_t frost_chan_alloc();
 
@@ -67,4 +67,6 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
  * @param pack 
  * @return frost_errcode_t 
  */
-frost_errcode_t frost_chan_read(chan_pack_t** pack, chan_control_t* ctrl);
+frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl);
+
+frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a);

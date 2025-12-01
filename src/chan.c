@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "engine.h"
-#include "chan.h"
 #include "utils.h"
+#include "chan.h"
 
 /**
  * MARK: __chan_pack_retain
@@ -36,6 +36,12 @@ static frost_errcode_t __chan_pack_retain(chan_pack_t* stack, chan_pack_t** reta
   return frost_err_ok;
 }
 
+/**
+* MARK: frost_chan_alloc_ex
+* @brief allocate channel
+*
+* @param task context
+*/
 frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
 
   if(task->chan.ref != NULL) {
@@ -49,8 +55,8 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
   }
 
   // create ring buffer
-  list_node_t* _buffer = NULL;
-  if(!frost_ok(list_create_ring(&_buffer))) {
+  rb_header_t* _rb_header = NULL;
+  if(!frost_ok(rb_create(32, sizeof(chan_pack_t*), &_rb_header))) {
     free(_chan);
     return frost_err_out_of_memory;
   }
@@ -58,12 +64,20 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
   // initialize chan parameters
   task->chan.ref = _chan; {
     _chan->notify_cnt = 0;
-    _chan->circular = _buffer;
+    _chan->header = _rb_header;
   }
 
   return frost_err_ok;
 }
 
+/**
+ * MARK: frost_chan_bind_ex
+ * @brief bind channel from A to B (A -> B)
+ * task A can access to channel B, however the reverse accessing is impossible
+ *
+ * @param task_a task A context
+ * @param task_b task B context
+ */
 frost_errcode_t frost_chan_bind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
 
   
@@ -71,6 +85,14 @@ frost_errcode_t frost_chan_bind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* t
   
 }
 
+/**
+ * MARK: frost_chan_crossbind_ex
+ * @brief bind channel between A and B (A <-> B)
+ * task A can access to channel B, allows reverse accessing (echo)
+ *
+ * @param task_a task A context
+ * @param task_b task B context
+ */
 frost_errcode_t frost_chan_crossbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
   
   // bind A -> B
@@ -88,6 +110,13 @@ bool frost_chan_is_allocated_ex(frost_task_ctx_t* task) {
   return task->chan.ref != NULL;
 }
 
+/**
+ * MARK: frost_chan_write_ex
+ * @brief write channel pack
+ *
+ * @param task_b task B context, pass NULL to write the bound channels
+ * @param pack the chan_pack_t pointer on the stack
+ */
 frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack) {
   
   frost_task_ctx_t* _task_a = __get_task_ctx(NULL);
@@ -116,7 +145,7 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       list_node_t* _node = _task_a->chan.bind->head;
       while(_node) {
         frost_task_ctx_t* _to_post = (frost_task_ctx_t *)_node->data; {
-          list_put(_to_post->chan.ref->circular, _retained_pack, sizeof(chan_pack_t), NULL);
+          rb_put(_to_post->chan.ref->header, _retained_pack, sizeof(chan_pack_t));
           ++_to_post->chan.ref->notify_cnt;
           ++_retained_pack->__ref_count;
         }
@@ -139,7 +168,7 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
         return frost_err_out_of_memory;
       }
 
-      list_put(_task_b->chan.ref->circular, _retained_pack, sizeof(chan_pack_t), NULL);
+      rb_put(_task_b->chan.ref->header, (void*)_retained_pack, sizeof(chan_pack_t*));
       ++_task_b->chan.ref->notify_cnt;
       ++_retained_pack->__ref_count;
     }
@@ -148,7 +177,14 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
   return frost_err_ok;
 }
 
-frost_errcode_t frost_chan_read(chan_pack_t** pack) {
+/**
+ * MARK: frost_chan_read
+ * @brief read channel pack
+ *
+ * @param pack 
+ * @return frost_errcode_t 
+ */
+frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
 
   frost_task_ctx_t* _task_a = __get_task_ctx(NULL);
   if(!_task_a || !_task_a->chan.ref) {
@@ -161,7 +197,7 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack) {
     return frost_err_ok;
   }
 
-  list_ctx_t* _ctx = _task_a->chan.ref->circular;
+  rb_header_t* _header = _task_a->chan.ref->header;
 
 
 }

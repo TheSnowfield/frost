@@ -17,7 +17,8 @@
 
 #include "common.h"
 #include "log.h"
-#include "list.h"
+#include "data/list.h"
+#include "data/slab-rb.h"
 
 #define T frost_handle_t
 typedef void (* frost_callback_t)();
@@ -69,7 +70,7 @@ typedef struct _frost_awaiter_t {
 } frost_awaiter_t;
 
 typedef struct _frost_chan_t {
-  list_node_t* circular;
+  rb_header_t* header;
   int notify_cnt;
 } frost_chan_t;
 
