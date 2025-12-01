@@ -5,5 +5,6 @@
 #include "../src/engine.h"
 #include "../src/tls.h"
 #include "../src/await.h"
+#include "../src/chan.h"
 
 #endif /* _FROST_API_H */

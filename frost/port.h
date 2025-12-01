@@ -19,6 +19,4 @@
   extern uint64_t __frost_time_tick(uint64_t* tick);
 #endif
 
-#define FROST_TASK_TLS_SIZE 8
-
 #endif /* _FROST_PORT_H */
