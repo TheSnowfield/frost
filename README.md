@@ -1,17 +1,23 @@
 ## ❄ frost
 
-❄ Frost ❄ is an asynchronous multi-tasking library for embedded hardware,  
-supporting await/async function calls and Task Local Storage (TLS).
+❄ Frost ❄ is an asynchronous multi-tasking library for embedded hardware, Here are its key features:
+- await/async function calls
+- task local storage
+- go-lang like channel
+- low memory usage, easy to port
 
 Frost does not interfere with task execution, offering better cross-platform compatibility,  
 it features an advanced task scheduler capable of running two types of tasks:  
- - **one shot**: task runs one shot, then deletes itself
+ - **one-shot**: task runs one shot, then deletes itself
  - **periodic**: task runs periodically, with a given period (setInterval)
+ - **awaken-by-chan(WIP)**: awake the task when channel is not empty, otherwise turn into freeze state
 
-Additionally, it supports a Golang-like "channel" for communication between tasks. (WIP)
-
-[![frost](https://img.shields.io/badge/Frost-v0.1-b7fffd)](#)
+[![frost](https://img.shields.io/badge/Frost-v0.2-b7fffd)](#)
 [![license](https://img.shields.io/badge/LICENSE-MIT-blue)](./blob/main/LICENSE)
+
+## ❄ ToDo
+- [] preemptive scheduling
+- [] awaken task by channel write
 
 ## ❄ Example
 
