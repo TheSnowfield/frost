@@ -7,6 +7,9 @@
  * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
  ****************************************************************************/
 
+#ifndef _FROST_CHAN_H
+#define _FROST_CHAN_H
+
 /**
 * @brief allocate channel
 *
@@ -78,3 +81,5 @@ frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a);
  * @param pack channel pack
  */
 frost_errcode_t frost_chan_free_pack(chan_pack_t* pack);
+
+#endif /* _FROST_CHAN_H */

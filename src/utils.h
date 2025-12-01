@@ -7,6 +7,9 @@
  * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
  ****************************************************************************/
 
+#ifndef _FROST_UTILS_H
+#define _FROST_UTILS_H
+
 static frost_task_ctx_t* __get_task_ctx(frost_task_ctx_t* task) {
   
   if(task != NULL) return task;
@@ -22,3 +25,6 @@ static frost_task_ctx_t* __get_task_ctx(frost_task_ctx_t* task) {
 
   return _task;
 }
+
+
+#endif /* _FROST_UTILS_H */

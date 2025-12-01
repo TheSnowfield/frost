@@ -7,6 +7,9 @@
  * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
  ****************************************************************************/
 
+#ifndef _FROST_DATA_SLAB_RB_H
+#define _FROST_DATA_SLAB_RB_H
+
 #include <stddef.h>
 
 typedef struct _rb_node_t {
@@ -59,3 +62,5 @@ frost_errcode_t rb_read(rb_header_t* rb, void* data, size_t* length, size_t* rem
  * @param rb ring buffer context
  */
 frost_errcode_t rb_destroy(rb_header_t* rb);
+
+#endif /* _FROST_DATA_SLAB_RB_H */

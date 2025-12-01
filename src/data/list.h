@@ -7,8 +7,8 @@
  * Authors: TheSnowfield <17957399+TheSnowfield@users.noreply.github.com>
  ****************************************************************************/
 
-#ifndef _UTILS_LIST_H
-#define _UTILS_LIST_H
+#ifndef _FROST_DATA_LIST_H
+#define _FROST_DATA_LIST_H
 
 #include <stddef.h>
 
@@ -60,4 +60,4 @@ frost_errcode_t list_delete(list_ctx_t* ctx, list_node_t* node);
  */
 frost_errcode_t list_destroy(list_ctx_t* ctx);
 
-#endif /* _UTILS_LIST_H */
+#endif /* _FROST_DATA_LIST_H */
