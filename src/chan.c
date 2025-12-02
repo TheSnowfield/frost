@@ -78,6 +78,8 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
     _chan->header = _rb_header;
   }
 
+  frost_log(TAG, "chan rb[%p] has allocated for task '%s'[%p]", _rb_header, task->name, task);
+
   return frost_err_ok;
 }
 
@@ -156,6 +158,7 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       // retain the message pack on the heap
       chan_pack_t* _retained_pack = NULL;
       if(!frost_ok(__chan_pack_retain(pack, &_retained_pack))) {
+        frost_log(TAG, "out of memory when retain a chanpack");
         return frost_err_out_of_memory;
       }
 
@@ -164,23 +167,31 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       //    \--> D
 
       // to write messages
+      int32_t _ref_count = 0;
       list_node_t* _node = _task_a->chan.bind->head;
       while(_node) {
         frost_task_ctx_t* _to_post = *(frost_task_ctx_t **)_node->data; {
 
           if(frost_ok(rb_put(_to_post->chan.ref->header, (void*)&_retained_pack, sizeof(chan_pack_t*)))) {
             ++_to_post->chan.ref->notify_cnt;
-            ++_retained_pack->__ref_count;
+            ++_ref_count;
+            frost_log(TAG, "chanpak[%p]: write flow '%s' -> '%s'", _retained_pack, _task_a->name, _to_post->name);
           }
 
           else {
-            __chan_pack_free(_retained_pack);
-            frost_log(TAG, "rb_put failed... consider out of memory? or full");
-            return frost_err_full;
+            frost_log(TAG, "task[%p] rb_put failed... consider out of memory? or full", _to_post);
           }
         }
         _node = _node->next;
       }
+
+      // if no task handle this chanpack
+      if (_ref_count == 0) {
+        __chan_pack_free(_retained_pack);
+        return frost_err_full;
+      }
+
+      _retained_pack->__ref_count = _ref_count;
     }
 
     // if task B is not contains a chan
@@ -250,11 +261,15 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
     return frost_err_fatal_error;
   }
 
+  --_task_a->chan.ref->notify_cnt;
+
   // if the ref count is alrady 0, wtf?
   if(_pack->__ref_count <= 0) {
-    // todo print something
+    frost_log(TAG, "task[%p] chanpak[%p]: warning __ref_count = %d", _task_a, _pack, _pack->__ref_count);
     return frost_err_fatal_error;
   }
+
+  frost_log(TAG, "chanpak[%p]: read flow '%s' read from channel, __ref_count = %d", _pack, _task_a->name, _pack->__ref_count);
 
   if(pack) {
     *pack = _pack;
@@ -271,6 +286,7 @@ frost_errcode_t frost_chan_free_pack(chan_pack_t* pack) {
   // destroy pack when end of pack lifetime
   if(--pack->__ref_count <= 0) {
     __chan_pack_free(pack);
+    frost_log(TAG, "chanpak[%p]: destroyed", pack);
   }
 
   return frost_err_ok;

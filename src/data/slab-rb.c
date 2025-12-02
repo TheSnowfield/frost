@@ -66,19 +66,15 @@ frost_errcode_t rb_create(size_t capacity, size_t blocksz, rb_header_t** rb) {
   rb_node_t* _rb_node_start = __rb_slab(_rb_body, 0, blocksz);
   rb_node_t* _rb_node_end = __rb_slab(_rb_body, capacity - 1, blocksz); {
     _rb_node_end->next = _rb_node_start;
-    for(size_t i = 0; i < capacity; ++i) {
+    for(size_t i = 0; i < capacity - 1; ++i) {
       rb_node_t* _rb_node = __rb_slab(_rb_body, i, blocksz);
       _rb_node->next = __rb_slab(_rb_body, i + 1, blocksz);
     }
-
-    // for(rb_node_t* i = _rb_node_start; i + 1 != _rb_node_end; ++i) {
-    //   i->next = i + 1;
-    // }
   }
 
   // build rb header
-  _rb_header->rb_start = _rb_body;
-  _rb_header->rb_end = _rb_body;
+  _rb_header->rb_start = _rb_node_start;
+  _rb_header->rb_end = _rb_node_start;
   _rb_header->init_rb_body = _rb_body;
   _rb_header->init_rb_body_size = capacity;
   _rb_header->size = 0;
@@ -104,7 +100,7 @@ frost_errcode_t rb_put(rb_header_t* rb, void* data, size_t length) {
   }
 
   // rb not full case
-  if(rb->size < rb->capacity) {
+  if(rb->size < rb->capacity - 1) {
 
     // allocate erase and write
     void* _area = __rbnode_data_area(rb->rb_end); {
@@ -119,7 +115,7 @@ frost_errcode_t rb_put(rb_header_t* rb, void* data, size_t length) {
 
   // rb is full (not considering insert)
   // todo: insert
-  else if(rb->size >= rb->capacity) {
+  else {
     return frost_err_full;
   }
 
