@@ -41,7 +41,7 @@ frost_errcode_t frost_chan_crossbind(frost_task_ctx_t* task_b);
 bool frost_chan_is_allocated_ex(frost_task_ctx_t* task);
 
 typedef struct _chan_pack_t {
-  uint32_t __ref_count;
+  int32_t __ref_count;
   void* data;
   uint32_t data_len;
 } chan_pack_t;

@@ -11,6 +11,7 @@
 #define _FROST_DATA_SLAB_RB_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct _rb_node_t {
   struct _rb_node_t* next;

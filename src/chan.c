@@ -24,7 +24,7 @@ static frost_errcode_t __chan_pack_retain(chan_pack_t* stack, chan_pack_t** reta
   size_t _length = sizeof(chan_pack_t) + stack->data_len;
   chan_pack_t* _retained = malloc(_length); {
     if(!_retained) return frost_err_out_of_memory;
-    memset(_retained, 0, sizeof(_length));
+    memset(_retained, 0, _length);
   }
 
   // make a copy
@@ -148,7 +148,8 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
 
       // task A and task B both invalid, return error
       // the case of invalid task A is the call from outside of the frost context
-      if(!_task_a && !_task_a->chan.bind) {
+      if(!_task_a || !_task_a->chan.bind) {
+        frost_log(TAG, "intented to write a invalid chan");
         return frost_err_invalid_chan;
       }
 
