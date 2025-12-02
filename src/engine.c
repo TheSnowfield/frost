@@ -72,8 +72,9 @@ frost_errcode_t frost_schedule_tasks() {
   if(!engine.initialized)
     return frost_err_need_initialize;
 
-  bool _realtime = true;
+  bool _is_realtime = true;
   int32_t _last_score = 0;
+  uint64_t _time_measure_start = 0;
 
   list_node_t* _node = engine.scheduler.tasks->head;
   while(_node != NULL) {
@@ -89,13 +90,17 @@ frost_errcode_t frost_schedule_tasks() {
         goto next;
 
       // get current tick time
-      engine.scheduler.tick = __frost_time_tick(NULL);
+      uint64_t _time = __frost_time_tick(NULL); {
+        engine.scheduler.time_can_use += _curctx->tick - (_time - _time_measure_start);
+        engine.scheduler.tick = _time; {
+          _time_measure_start = engine.scheduler.tick;
+        }
+      }
 
       // it's time to do something? :p
-      if(_curctx->interval == 0 ||
-         engine.scheduler.tick - _curctx->tick >= _curctx->interval) {
+      if(_curctx->interval == 0 || engine.scheduler.tick >= _curctx->tick) {
 
-        uint64_t _time = engine.scheduler.tick;
+        _curctx->fire++;
 
         // update the new context then run the task,
         // and restore the old context finally
@@ -105,14 +110,14 @@ frost_errcode_t frost_schedule_tasks() {
           engine.scheduler.context = _oldctx;
 
           // refill the tick time
-          if(_curctx->refill) {
-            _curctx->tick = engine.scheduler.tick;
-
-            // preemptive control
-            _curctx->exec_time = __frost_time_tick(NULL) - _time;
+          if (_curctx->refill) {
+            _curctx->tick += _curctx->interval;
 
             // calculate score
-            _curctx->score = _curctx->interval - (_curctx->exec_time + _curctx->score / 10);
+            engine.scheduler.tick = __frost_time_tick(NULL); {
+              _curctx->exec_time = engine.scheduler.tick - _time_measure_start;
+              _curctx->score = _curctx->tick - engine.scheduler.tick;
+            }
           }
 
           // if this task marked as one-shot task, remove it from the list
@@ -132,24 +137,23 @@ frost_errcode_t frost_schedule_tasks() {
       }
 
       // raise priority
+      // preemptive control
       if (_curctx->score < _last_score) {
         list_move_forward(engine.scheduler.tasks, _node);
       }
 
       // record score for next use
       _last_score = _curctx->score;
-
-      if (_realtime && _curctx->score < 0) {
-        _realtime = false;
+      if (_is_realtime && _curctx->score < 0) {
+        _is_realtime = false;
       }
     }
 
     // next task
   next:
 
-    // track schedule issue
-    engine.scheduler.real_time = _realtime;
-
+    // get current tick time
+    engine.scheduler.is_realtime = _is_realtime;
     _node = _node->next;
   }
 
@@ -253,8 +257,8 @@ frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ct
     _task_ptr->callback = func;
     _task_ptr->refill = true;
     _task_ptr->interval = interval;
-    _task_ptr->tick = __frost_time_tick(NULL);
-    _task_ptr->score = interval;
+    _task_ptr->tick = __frost_time_tick(NULL) + interval;
+    _task_ptr->score = 0;
   }
 
   frost_errcode_t _result;

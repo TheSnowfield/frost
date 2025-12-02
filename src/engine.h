@@ -95,6 +95,7 @@ typedef struct _frost_ctx_t {
   uint64_t tick;
   uint64_t exec_time;
   int32_t score;
+  uint64_t fire;
 
   struct {
     frost_chan_t* ref;
@@ -111,7 +112,8 @@ typedef struct {
     frost_task_ctx_t* context;
     uint64_t tick;
     bool is_dirty;
-    bool real_time;
+    bool is_realtime;
+    int32_t time_can_use;
     int32_t last_score;
   } scheduler;
 } frost_engine_t;
