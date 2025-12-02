@@ -60,4 +60,20 @@ frost_errcode_t list_delete(list_ctx_t* ctx, list_node_t* node);
  */
 frost_errcode_t list_destroy(list_ctx_t* ctx);
 
+/**
+ * @brief move node to forward
+ *
+ * @param ctx list context pointer
+ * @param node node
+ */
+frost_errcode_t list_move_forward(list_ctx_t* ctx, list_node_t* node);
+
+/**
+ * @brief move node to backward
+ *
+ * @param ctx list context pointer
+ * @param node node
+ */
+frost_errcode_t list_move_backward(list_ctx_t* ctx, list_node_t* node);
+
 #endif /* _FROST_DATA_LIST_H */

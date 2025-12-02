@@ -127,3 +127,68 @@ frost_errcode_t list_delete(list_ctx_t* ctx, list_node_t* node) {
 
   return frost_err_ok;
 }
+
+frost_errcode_t list_move_backward(list_ctx_t* ctx, list_node_t* node) {
+  
+    if (ctx == NULL || node == NULL)
+        return frost_err_invalid_parameter;
+
+    if (node->next == NULL)
+        return frost_err_ok;
+
+    list_node_t* _prev = node->prev;
+    list_node_t* _next = node->next;
+
+    if (_prev != NULL) {
+        _prev->next = _next;
+    } else {
+        ctx->head = _next;
+    }
+
+    _next->prev = _prev;
+
+    node->prev = _next;
+    node->next = _next->next;
+
+    if (_next->next != NULL) {
+        _next->next->prev = node;
+    } else {
+        ctx->tail = node;
+    }
+
+    _next->next = node;
+
+    return frost_err_ok;
+}
+
+frost_errcode_t list_move_forward(list_ctx_t* ctx, list_node_t* node) {
+    if (ctx == NULL || node == NULL)
+        return frost_err_invalid_parameter;
+
+    if (node->prev == NULL)
+        return frost_err_ok;
+
+    list_node_t* _prev = node->prev;
+    list_node_t* _next = node->next;
+
+    if (_next != NULL) {
+        _next->prev = _prev;
+    } else {
+        ctx->tail = _prev;
+    }
+
+    _prev->next = _next;
+
+    node->next = _prev;
+    node->prev = _prev->prev;
+
+    if (_prev->prev != NULL) {
+        _prev->prev->next = node;
+    } else {
+        ctx->head = node;
+    }
+
+    _prev->prev = node;
+
+    return frost_err_ok;
+}

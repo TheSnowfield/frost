@@ -151,14 +151,14 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       // task A and task B both invalid, return error
       // the case of invalid task A is the call from outside of the frost context
       if(!_task_a || !_task_a->chan.bind) {
-        frost_log(TAG, "intented to write a invalid chan");
+        frost_log(TAG, "task[%p] intented to write a invalid chan", _task_a);
         return frost_err_invalid_chan;
       }
 
       // retain the message pack on the heap
       chan_pack_t* _retained_pack = NULL;
       if(!frost_ok(__chan_pack_retain(pack, &_retained_pack))) {
-        frost_log(TAG, "out of memory when retain a chanpack");
+        frost_log(TAG, "task[%p] out of memory when retain a chanpack", _task_a);
         return frost_err_out_of_memory;
       }
 
