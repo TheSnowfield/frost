@@ -4,6 +4,7 @@
 - await/async function calls
 - task local storage
 - go-lang like channel
+- preemptive scheduling
 - low memory usage, easy to port
 
 Frost does not interfere with task execution, offering better cross-platform compatibility,  
@@ -16,8 +17,8 @@ it features an advanced task scheduler capable of running two types of tasks:
 [![license](https://img.shields.io/badge/LICENSE-MIT-blue)](./blob/main/LICENSE)
 
 ## ❄ ToDo
-- [] preemptive scheduling
-- [] awaken task by channel write
+- [x] preemptive scheduling
+- [ ] awaken task by channel write
 
 ## ❄ Example
 
