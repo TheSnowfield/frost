@@ -116,6 +116,10 @@ frost_errcode_t rb_put(rb_header_t* rb, void* data, size_t length) {
   // rb is full (not considering insert)
   // todo: insert
   else {
+
+    //size_t _rb_node_length = sizeof(rb_node_t) + rb->block_size;
+    //malloc(_rb_node_length);
+
     return frost_err_full;
   }
 

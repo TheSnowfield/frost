@@ -73,7 +73,7 @@ frost_errcode_t frost_schedule_tasks() {
     return frost_err_need_initialize;
 
   bool _is_realtime = true;
-  int32_t _last_score = 0;
+  int64_t _last_score = 0;
   uint64_t _time_measure_start = 0;
 
   list_node_t* _node = engine.scheduler.tasks->head;
@@ -91,7 +91,6 @@ frost_errcode_t frost_schedule_tasks() {
 
       // get current tick time
       uint64_t _time = __frost_time_tick(NULL); {
-        engine.scheduler.time_can_use += _curctx->tick - (_time - _time_measure_start);
         engine.scheduler.tick = _time; {
           _time_measure_start = engine.scheduler.tick;
         }
@@ -111,7 +110,11 @@ frost_errcode_t frost_schedule_tasks() {
 
           // refill the tick time
           if (_curctx->refill) {
-            _curctx->tick += _curctx->interval;
+
+            if(_curctx->score > 0)
+              _curctx->tick += _curctx->interval;
+            else
+              _curctx->tick = engine.scheduler.tick - _curctx->exec_time + _curctx->interval;
 
             // calculate score
             engine.scheduler.tick = __frost_time_tick(NULL); {
@@ -258,7 +261,7 @@ frost_errcode_t frost_task_interval(uint32_t interval, void* func, frost_task_ct
     _task_ptr->refill = true;
     _task_ptr->interval = interval;
     _task_ptr->tick = __frost_time_tick(NULL) + interval;
-    _task_ptr->score = 0;
+    _task_ptr->score = interval;
   }
 
   frost_errcode_t _result;
