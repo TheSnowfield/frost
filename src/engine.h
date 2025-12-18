@@ -107,7 +107,10 @@ typedef struct _frost_ctx_t {
   uint64_t tick;
   uint64_t exec_time;
   int64_t score;
+
+  #ifdef FROST_DEBUG
   uint64_t fire;
+  #endif /* FROST_DEBUG */
 
   struct {
     frost_chan_t* ref;

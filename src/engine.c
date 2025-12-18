@@ -126,7 +126,9 @@ frost_errcode_t frost_schedule_tasks() {
       // it's time to do something? :p
       if(_curctx->interval == 0 || engine.scheduler.tick >= _curctx->tick) {
 
+        #ifdef FROST_DEBUG
         _curctx->fire++;
+        #endif /* FROST_DEBUG */
 
         // update the new context then run the task,
         // and restore the old context finally
