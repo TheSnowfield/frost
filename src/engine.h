@@ -52,10 +52,12 @@ typedef void (* frost_callback_arg15_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T,T);
   #define TAG "---"
 #endif
 
+#define __MKFFLAG(b) (1 << b)
 typedef enum {
-  frost_flag_suspend = 1,
-  frost_flag_chan_suspend = 2,
+  frost_flag_freeze = __MKFFLAG(0),
+  frost_flag_unfreeze_by_chan_write = __MKFFLAG(1),
 } frost_flag_t;
+#undef __MKFFLAG
 
 typedef enum {
   frost_chanctl_ok = 0,

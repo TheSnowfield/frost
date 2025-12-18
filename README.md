@@ -18,7 +18,7 @@ it features an advanced task scheduler capable of running two types of tasks:
 
 ## ❄ ToDo
 - [x] preemptive scheduling
-- [ ] awaken task by channel write
+- [x] unfreeze task by channel write
 
 ## ❄ Example
 

@@ -17,6 +17,17 @@
 
 static frost_engine_t engine = { 0 };
 
+/**
+ * @brief test frost task flag
+ *
+ * @param ctx task ctx
+ * @param flag flag to test
+ * @return flag set return non zero
+ */
+static int __fflag(frost_task_ctx_t* ctx, frost_flag_t flag) {
+  return ctx->flags & flag;
+}
+
 frost_engine_t* frost_get_engine() {
   return &engine;
 }
@@ -85,9 +96,25 @@ frost_errcode_t frost_schedule_tasks() {
       if(engine.scheduler.context == _curctx)
         goto next;
 
-      // do not invoke suspended task
-      else if (_curctx->flags & frost_flag_suspend)
-        goto next;
+      // for frozen task
+      else if (__fflag(_curctx, frost_flag_freeze)) {
+
+        // if not set chan write unfreeze, jump into next
+        if(!__fflag(_curctx, frost_flag_unfreeze_by_chan_write)) {
+          goto next;
+        }
+
+        // dont unfreeze case
+        if(!_curctx->chan.ref || _curctx->chan.ref->notify_cnt <= 0) {
+          if(!_curctx->chan.ref) {
+            frost_log(TAG, "task[%p] set 'unfreeze_by_chan_write' but no channel allocated", _curctx);
+          }
+          goto next;
+        }
+
+        // sync the tick to scheduler main tick to fire the task immediately
+        _curctx->tick = engine.scheduler.tick;
+      }
 
       // get current tick time
       uint64_t _time = __frost_time_tick(NULL); {
