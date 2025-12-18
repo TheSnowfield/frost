@@ -68,8 +68,8 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
 #define frost_chan_write(T) \
   frost_chan_write_ex(NULL, &(chan_pack_t) { \
     .data = (uint8_t *)(T), \
-    .data_len = sizeof(*(T)) \
-    .ctrl = frost_chanctl_ok \ /* for initializing */
+    .data_len = sizeof(*(T)), \
+    .ctrl = frost_chanctl_ok \
   })
 
 /**

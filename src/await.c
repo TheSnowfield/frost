@@ -62,7 +62,7 @@ frost_awaiter_t* awaiter_await(frost_awaiter_t* awaiter) {
   frost_engine_t* _engine;
   frost_errcode_t _result;
 
-  if(!frost_ok(_result = frost_get_instance(&_engine))) {
+  if(!frost_ok(_result = frost_get_engine(&_engine))) {
     awaiter->status = frost_err_invalid_parameter;
     awaiter->is_finished = true;
     awaiter->result = NULL;
