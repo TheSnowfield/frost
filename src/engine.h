@@ -39,8 +39,18 @@ typedef void (* frost_callback_arg14_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 typedef void (* frost_callback_arg15_t)(T,T,T,T,T,T,T,T,T,T,T,T,T,T,T);
 #undef T
 
+/**
+ * @brief Task Local Storage size
+ */
 #ifndef FROST_TLS_SIZE
   #define FROST_TLS_SIZE 8
+#endif
+
+/**
+ * @brief Channel Ringbuff size
+ */
+#ifndef FROST_CHAN_RINGBUFF_SIZE
+  #define FROST_CHAN_RINGBUFF_SIZE 16
 #endif
 
 #ifdef _MSC_VER

@@ -67,7 +67,7 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
 
   // create ring buffer
   rb_header_t* _rb_header = NULL;
-  if(!frost_ok(rb_create(32, sizeof(chan_pack_t*), &_rb_header))) {
+  if(!frost_ok(rb_create(FROST_CHAN_RINGBUFF_SIZE, sizeof(chan_pack_t*), &_rb_header))) {
     free(_chan);
     return frost_err_out_of_memory;
   }
