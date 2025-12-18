@@ -11,7 +11,7 @@ Frost does not interfere with task execution, offering better cross-platform com
 it features an advanced task scheduler capable of running two types of tasks:  
  - **one-shot**: task runs one shot, then deletes itself
  - **periodic**: task runs periodically, with a given period (setInterval)
- - **awaken-by-chan(WIP)**: awake the task when channel is not empty, otherwise turn into freeze state
+ - **awaken-by-chan-write**: awake the task when channel is not empty, otherwise turn into freeze state
 
 [![frost](https://img.shields.io/badge/Frost-v0.2-b7fffd)](#)
 [![license](https://img.shields.io/badge/LICENSE-MIT-blue)](./blob/main/LICENSE)

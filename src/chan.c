@@ -31,6 +31,8 @@ static frost_errcode_t __chan_pack_retain(chan_pack_t* stack, chan_pack_t** reta
   _retained->__ref_count = 0;
   _retained->data = (uint8_t*)(_retained + 1);
   _retained->data_len = stack->data_len;
+  _retained->ctrl = stack->ctrl;
+  _retained->from = stack->from;
   memcpy(_retained->data, stack->data, stack->data_len);
 
   *retained = _retained;
@@ -162,6 +164,10 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
         return frost_err_out_of_memory;
       }
 
+      if(!_retained_pack->from) {
+        _retained_pack->from = _task_a;
+      }
+
       //    /--> B
       // A -+--> C
       //    \--> D
@@ -207,6 +213,10 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
       chan_pack_t* _retained_pack = NULL;
       if(!frost_ok(__chan_pack_retain(pack, &_retained_pack))) {
         return frost_err_out_of_memory;
+      }
+
+      if(!_retained_pack->from) {
+        _retained_pack->from = _task_a;
       }
 
       if(frost_ok(rb_put(_task_b->chan.ref->header, (void*)&_retained_pack, sizeof(chan_pack_t*)))) {
@@ -255,7 +265,7 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
     return frost_err_ok;
   }
 
-  // get ting buffer data
+  // get ring buffer data
   if(!frost_ok(rb_read(_task_a->chan.ref->header, (void*)&_pack, &_length, &_remain))) {
     if(pack != NULL) *pack = NULL;
     return frost_err_fatal_error;
@@ -271,9 +281,30 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
 
   frost_log(TAG, "chanpak[%p]: read flow '%s' read from channel, __ref_count = %d", _pack, _task_a->name, _pack->__ref_count);
 
-  if(pack) {
-    *pack = _pack;
+  // when channel close
+  // remove bind from bind list
+  if(_pack->ctrl == frost_chanctl_close) {
+
+    // TODO: move to chan_unbind function
+    list_node_t* _node = _task_a->chan.bind->head;
+    do {
+      if(!_node) break;
+
+      frost_task_ctx_t* _task_b; {
+        _task_b = *(frost_task_ctx_t **)_node->data;
+      }
+
+      // remove dead channel
+      if(_task_b == _pack->from) {
+        list_delete(_task_a->chan.bind, _node);
+        frost_log(TAG, "task[%p] unbinding with channel task[%p]", _task_a, _task_b);
+        break;
+      }
+    } while(_node = _node->next);
   }
+
+  if(pack) *pack = _pack;
+  if(ctrl) *ctrl = _pack->ctrl;
 
   return frost_err_ok;
 }
@@ -290,11 +321,38 @@ frost_errcode_t frost_chan_free_pack(chan_pack_t* pack) {
   }
 
   return frost_err_ok;
-
 }
 
 frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a) {
 
+  if(!task_a->chan.ref) {
+    return frost_err_invalid_parameter;
+  }
+
+  // notify unbind channels
+  frost_chan_write_ex(NULL, &(chan_pack_t) {
+    .ctrl = frost_chanctl_close,
+    .from = task_a,
+    .data_len = 0,
+    .data = NULL
+  });
+
+  // unref all channel packs of the ringbuffer
+  if(task_a->chan.ref->notify_cnt != 0) {
+    chan_pack_t* _pack = NULL;
+    while(frost_chan_read(&_pack, NULL) != frost_err_eof) {
+      frost_chan_free_pack(_pack);
+    }
+  }
+
+  // do destroy & cleanup
+  list_destroy(task_a->chan.bind);
+  rb_destroy(task_a->chan.ref->header); {
+    task_a->chan.ref = NULL;
+    task_a->chan.bind = NULL;
+  }
+
+  return frost_err_ok;
 }
 
 frost_errcode_t frost_chan_alloc() {

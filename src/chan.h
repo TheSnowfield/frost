@@ -38,10 +38,17 @@ frost_errcode_t frost_chan_bind(frost_task_ctx_t* task_b);
 frost_errcode_t frost_chan_crossbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b);
 frost_errcode_t frost_chan_crossbind(frost_task_ctx_t* task_b);
 
+/**
+ * @brief is channel allocated
+ *
+ * @param task task context
+ */
 bool frost_chan_is_allocated_ex(frost_task_ctx_t* task);
 
 typedef struct _chan_pack_t {
   int32_t __ref_count;
+  frost_task_ctx_t* from;
+  frost_chanctl_t ctrl;
   void* data;
   uint32_t data_len;
 } chan_pack_t;
@@ -62,18 +69,24 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
   frost_chan_write_ex(NULL, &(chan_pack_t) { \
     .data = (uint8_t *)(T), \
     .data_len = sizeof(*(T)) \
+    .ctrl = frost_chanctl_ok \ /* for initializing */
   })
 
 /**
  * @brief read channel pack
  *
- * @param pack 
- * @return frost_errcode_t 
+ * @param pack channel pack pointer
+ * @param ctrl when frost_chanctl_eof meant to close the channel.
+ * in this case channel pack pointer is **invalid** do not use. otherwize frost_chanctl_ok
  */
 frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl);
 
+/**
+ * @brief unbind all channels, clear internal ringbuffer, and destroy the channel
+ *
+ * @param task_a task context
+ */
 frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a);
-
 
 /**
  * @brief free a chan pack after read

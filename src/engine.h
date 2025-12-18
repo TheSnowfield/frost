@@ -71,7 +71,7 @@ typedef enum {
 
 typedef enum {
   frost_chanctl_ok = 0,
-  frost_chanctl_eof = 1,
+  frost_chanctl_close = 1,
 } frost_chanctl_t;
 
 typedef struct _frost_awaiter_t {
