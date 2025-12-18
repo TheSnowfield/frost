@@ -28,10 +28,6 @@ static int __fflag(frost_task_ctx_t* ctx, frost_flag_t flag) {
   return ctx->flags & flag;
 }
 
-frost_engine_t* frost_get_engine() {
-  return &engine;
-}
-
 frost_errcode_t frost_init() {
 
   if(engine.initialized)
@@ -69,7 +65,7 @@ frost_errcode_t frost_uninit() {
   return frost_err_ok;
 }
 
-frost_errcode_t frost_get_instance(frost_engine_t** instance) {
+frost_errcode_t frost_get_engine(frost_engine_t** instance) {
 
   if(instance == NULL)
     return frost_err_invalid_parameter;

@@ -166,7 +166,7 @@ bool frost_is_initialized();
  * @param instance pointer to storage engine pointer
  * @return frost_errcode_t if success return ok
  */
-frost_errcode_t frost_get_instance(frost_engine_t** instance);
+frost_errcode_t frost_get_engine(frost_engine_t** instance);
 
 /**
  * @brief process tasks
