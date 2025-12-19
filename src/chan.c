@@ -359,7 +359,8 @@ frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a) {
 
   // do destroy & cleanup
   list_destroy(task_a->chan.bind);
-  rb_destroy(task_a->chan.ref->header); {
+  rb_destroy(task_a->chan.ref->header);
+  free(task_a->chan.ref); {
     task_a->chan.ref = NULL;
     task_a->chan.bind = NULL;
   }
