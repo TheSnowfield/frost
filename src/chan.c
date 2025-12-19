@@ -33,7 +33,9 @@ static frost_errcode_t __chan_pack_retain(chan_pack_t* stack, chan_pack_t** reta
   _retained->data_len = stack->data_len;
   _retained->ctrl = stack->ctrl;
   _retained->from = stack->from;
-  memcpy(_retained->data, stack->data, stack->data_len);
+  if(stack->data_len != 0) {
+    memcpy(_retained->data, stack->data, stack->data_len);
+  }
 
   *retained = _retained;
 
@@ -143,6 +145,10 @@ bool frost_chan_is_allocated_ex(frost_task_ctx_t* task) {
  * @param pack the chan_pack_t pointer on the stack
  */
 frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack) {
+
+  if(pack == NULL) {
+    return frost_err_invalid_parameter;
+  }
   
   frost_task_ctx_t* _task_a = __get_task_ctx(NULL);
   frost_task_ctx_t* _task_b = task_b; {
@@ -285,10 +291,13 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
   // remove bind from bind list
   if(_pack->ctrl == frost_chanctl_close) {
 
+    if(_task_a->chan.bind == NULL) {
+      goto out;
+    }
+
     // TODO: move to chan_unbind function
     list_node_t* _node = _task_a->chan.bind->head;
-    do {
-      if(!_node) break;
+    while(_node) {
 
       frost_task_ctx_t* _task_b; {
         _task_b = *(frost_task_ctx_t **)_node->data;
@@ -300,9 +309,12 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
         frost_log(TAG, "task[%p] unbinding with channel task[%p]", _task_a, _task_b);
         break;
       }
-    } while(_node = _node->next);
+
+      _node = _node->next;
+    }
   }
 
+out:
   if(pack) *pack = _pack;
   if(ctrl) *ctrl = _pack->ctrl;
 

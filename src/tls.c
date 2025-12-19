@@ -78,7 +78,7 @@ frost_errcode_t frost_tls_destroy() {
 bool frost_tls_is_allocated_ex(frost_task_ctx_t* task) {
 
   frost_task_ctx_t* _task = __get_task_ctx(task); {
-    if(_task == NULL) return frost_err_invalid_parameter;
+    if(_task == NULL) return false;
   }
 
   return _task->tls != NULL;
@@ -114,7 +114,7 @@ frost_errcode_t frost_tls_get_value_ex(frost_task_ctx_t* task, uint32_t index, s
   }
 
   // validate arguments
-  if(value == NULL || index > FROST_TLS_SIZE || index < 0)
+  if(value == NULL || index >= FROST_TLS_SIZE || _task->tls == NULL)
     return frost_err_invalid_parameter;
 
   // read value
