@@ -11,10 +11,10 @@
 #define _FROST_CHAN_H
 
 /**
-* @brief allocate channel
-*
-* @param task context
-*/
+ * @brief allocate channel
+ *
+ * @param task context
+ */
 frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task);
 frost_errcode_t frost_chan_alloc();
 
@@ -44,6 +44,7 @@ frost_errcode_t frost_chan_crossbind(frost_task_ctx_t* task_b);
  * @param task task context
  */
 bool frost_chan_is_allocated_ex(frost_task_ctx_t* task);
+bool frost_chan_is_allocated();
 
 typedef struct _chan_pack_t {
   int32_t __ref_count;
@@ -82,7 +83,9 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
 frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl);
 
 /**
- * @brief unbind all channels, clear internal ringbuffer, and destroy the channel
+ * @brief unbind all channels, clear internal ringbuffer, and destroy the channel.
+ * after invoke this function the unread channel messages will free and destroy automatically,
+ * thus you should read(or clean) them before this operation.
  *
  * @param task_a task context
  */
@@ -94,5 +97,15 @@ frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a);
  * @param pack channel pack
  */
 frost_errcode_t frost_chan_free_pack(chan_pack_t* pack);
+
+/**
+ * @brief unbind tasks. this function do unbind channels between task_a and task_b,
+ * this affects both sides (A <-> B).
+ *
+ * @param task_a 
+ * @param task_b 
+ * @return frost_errcode_t 
+ */
+frost_errcode_t frost_chan_unbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b);
 
 #endif /* _FROST_CHAN_H */

@@ -287,40 +287,18 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
 
   frost_log(TAG, "chanpak[%p]: read flow '%s' read from channel, __ref_count = %d", _pack, _task_a->name, _pack->__ref_count);
 
-  // when channel close
-  // remove bind from bind list
-  if(_pack->ctrl == frost_chanctl_close) {
-
-    if(_task_a->chan.bind == NULL) {
-      goto out;
-    }
-
-    // TODO: move to chan_unbind function
-    list_node_t* _node = _task_a->chan.bind->head;
-    while(_node) {
-
-      frost_task_ctx_t* _task_b; {
-        _task_b = *(frost_task_ctx_t **)_node->data;
-      }
-
-      // remove dead channel
-      if(_task_b == _pack->from) {
-        list_delete(_task_a->chan.bind, _node);
-        frost_log(TAG, "task[%p] unbinding with channel task[%p]", _task_a, _task_b);
-        break;
-      }
-
-      _node = _node->next;
-    }
-  }
-
-out:
   if(pack) *pack = _pack;
   if(ctrl) *ctrl = _pack->ctrl;
 
   return frost_err_ok;
 }
 
+/**
+ * MARK: frost_chan_free_pack
+ * @brief free a chan pack after read
+ *
+ * @param pack channel pack
+ */
 frost_errcode_t frost_chan_free_pack(chan_pack_t* pack) {
   if(!pack) {
     return frost_err_invalid_parameter;
@@ -335,22 +313,95 @@ frost_errcode_t frost_chan_free_pack(chan_pack_t* pack) {
   return frost_err_ok;
 }
 
+static bool __chan_get_bound_node(frost_task_ctx_t* task, frost_task_ctx_t* bind, list_node_t** node) {
+
+  if(!task->chan.bind) return false;
+
+  list_node_t* _node = task->chan.bind->head;
+  while(_node) {
+    frost_task_ctx_t* _bind = *(frost_task_ctx_t **)_node->data;
+    if(_bind == task) {
+      if(node) *node = _node;
+      return true;
+    }
+    _node = _node->next;
+  }
+
+  return false;
+}
+
+/**
+ * MARK: frost_chan_unbind_ex
+ * @brief unbind tasks. this function do unbind channels between task_a and task_b,
+ * this affects both sides (A <-> B).
+ *
+ * @param task_a 
+ * @param task_b 
+ * @return frost_errcode_t 
+ */
+frost_errcode_t frost_chan_unbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
+
+  if(task_a->chan.bind == NULL) {
+    return frost_err_invalid_parameter;
+  }
+
+  list_node_t* _node = NULL;
+
+  // unbind A -> B (requires A has bind list, B has channel queue)
+  if((task_a->chan.bind != NULL && task_b->chan.ref != NULL) &&
+    __chan_get_bound_node(task_a, task_b, &_node)) {
+    frost_log(TAG, "task[%p] unbinding with channel task[%p]", task_a, task_b);
+    list_delete(task_a->chan.bind, _node);
+    frost_chan_write_ex(task_a, &(chan_pack_t) {
+      .ctrl = frost_chanctl_close,
+      .from = task_b,
+      .data = NULL,
+      .data_len = 0
+    });
+  }
+
+  // unbind B -> A (requires B has bind list, A has channel queue)
+  if((task_b->chan.bind != NULL && task_a->chan.ref != NULL) && 
+    __chan_get_bound_node(task_b, task_a, &_node)) {
+    frost_log(TAG, "task[%p] unbinding with channel task[%p]", task_b, task_a);
+    list_delete(task_b->chan.bind, _node);
+    frost_chan_write_ex(task_b, &(chan_pack_t) {
+      .ctrl = frost_chanctl_close,
+      .from = task_a,
+      .data = NULL,
+      .data_len = 0
+    });
+  }
+
+  return frost_err_ok;
+}
+
+/**
+ * MARK: frost_chan_destroy_ex
+ * @brief unbind all channels, clear internal ringbuffer, and destroy the channel
+ *
+ * @param task_a task context
+ */
 frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a) {
 
   if(!task_a->chan.ref) {
     return frost_err_invalid_parameter;
   }
 
-  // notify unbind channels
-  frost_chan_write_ex(NULL, &(chan_pack_t) {
-    .ctrl = frost_chanctl_close,
-    .from = task_a,
-    .data_len = 0,
-    .data = NULL
-  });
+  // unbind from all tasks
+  frost_task_enum_t _enum = {0};
+  while(frost_enumerate_tasks(&_enum) == frost_err_ok) {
+    if(_enum.task != task_a && frost_chan_is_allocated_ex(_enum.task)) {
+      frost_chan_unbind_ex(_enum.task, task_a);
+      frost_log(TAG, "task[%p]: unbinded to task[%p]", _enum.task, task_a);
+    }
+  }
 
-  // unref all channel packs of the ringbuffer
+  // unref all channel packs of the ringbuffer,
+  // clean and free them.
   if(task_a->chan.ref->notify_cnt != 0) {
+    frost_log(TAG, "task[%p]: has unread channel packs, do clean", task_a);
+
     chan_pack_t* _pack = NULL;
     while(frost_chan_read(&_pack, NULL) != frost_err_eof) {
       frost_chan_free_pack(_pack);
@@ -368,18 +419,44 @@ frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a) {
   return frost_err_ok;
 }
 
+/**
+ * MARK: frost_chan_alloc
+ * @brief allocate channel
+ *
+ * @param task context
+ */
 frost_errcode_t frost_chan_alloc() {
   return frost_chan_alloc_ex(NULL);
 }
 
+/**
+ * MARK: frost_chan_bind
+ * @brief bind channel from A to B (A -> B)
+ * task A can access to channel B, however the reverse accessing is impossible
+ *
+ * @param task_b task B context
+ */
 frost_errcode_t frost_chan_bind(frost_task_ctx_t* task_b) {
   return frost_chan_bind_ex(NULL, task_b);
 }
 
+/**
+ * MARK: frost_chan_crossbind
+ * @brief bind channel between A and B (A <-> B)
+ * task A can access to channel B, allows reverse accessing (echo)
+ *
+ * @param task_b task B context
+ */
 frost_errcode_t frost_chan_crossbind(frost_task_ctx_t* task_b) {
   return frost_chan_crossbind_ex(NULL, task_b);
 }
 
-bool frost_chan_is_allocated(frost_task_ctx_t* task) {
-  return (__get_task_ctx(NULL))->chan.ref != NULL;
+/**
+ * MARK: frost_chan_is_allocated
+ * @brief is channel allocated
+ *
+ * @param task task context
+ */
+bool frost_chan_is_allocated() {
+  return frost_chan_is_allocated_ex(NULL);
 }
