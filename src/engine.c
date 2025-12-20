@@ -410,3 +410,50 @@ frost_errcode_t frost_sleep(size_t duration_ms) {
 uint64_t frost_get_timetick(uint64_t* tick) {
   return __frost_time_tick(tick);
 }
+
+/**
+ * @brief enumerate task list
+ *
+ * @return frost_errcode_t if reach the end return frost_err_eof
+ */
+frost_errcode_t frost_enumerate_tasks(frost_task_enum_t* e) {
+
+  #define _to_handle(x) ((frost_handle_t)(x))
+  #define _from_handle(x) ((list_node_t*)(x))
+
+  if(e == NULL) {
+    return frost_err_invalid_parameter;
+  }
+
+  list_node_t* _node = NULL;
+  
+  if(!e->__inited) {
+    e->__inited = true;
+
+    if(!engine.scheduler.tasks->head) {
+      return frost_err_eof;
+    }
+
+    _node = engine.scheduler.tasks->head;
+    e->__next = _to_handle(_node->next);
+    e->index = 0;
+    e->task = *(frost_task_ctx_t **)_node->data;
+    return frost_err_ok;
+  }
+  
+  else {
+
+    if(!e->__next) {
+      return frost_err_eof;
+    }
+
+    _node = ((list_node_t *)e->__next);
+    e->__next = _to_handle(_node->next);
+    e->index++;
+    e->task = *(frost_task_ctx_t **)_node->data;
+    return frost_err_ok;
+  }
+
+  #undef _to_handle
+  #undef _from_handle
+}

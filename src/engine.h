@@ -254,4 +254,18 @@ frost_errcode_t frost_sleep(size_t duration_ms);
  */
 uint64_t frost_get_timetick(uint64_t* tick);
 
+typedef struct _frost_task_enum_t {
+  bool __inited;
+  frost_handle_t __next;
+  size_t index;
+  frost_task_ctx_t* task;
+} frost_task_enum_t;
+
+/**
+ * @brief enumerate task list
+ *
+ * @return frost_errcode_t if reach the end return frost_err_eof
+ */
+frost_errcode_t frost_enumerate_tasks(frost_task_enum_t* e);
+
 #endif /* _FROST_ENGINE_H */
