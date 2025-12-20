@@ -18,6 +18,8 @@
 frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task);
 frost_errcode_t frost_chan_alloc();
 
+frost_errcode_t frost_chan_destroy();
+
 /**
  * @brief bind channel from A to B (A -> B)
  * task A can access to channel B, however the reverse accessing is impossible
@@ -68,9 +70,12 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
  */
 #define frost_chan_write(T) \
   frost_chan_write_ex(NULL, &(chan_pack_t) { \
-    .data = (uint8_t *)(T), \
-    .data_len = sizeof(*(T)), \
-    .ctrl = frost_chanctl_ok \
+    .ctrl = frost_chanctl_ok, \
+    .data = (void *)(T), \
+    .data_len = _Generic(T, \
+      char *: strlen(T), \
+      default: sizeof(*(T)) \
+    ), \
   })
 
 /**
@@ -107,5 +112,6 @@ frost_errcode_t frost_chan_free_pack(chan_pack_t* pack);
  * @return frost_errcode_t 
  */
 frost_errcode_t frost_chan_unbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b);
+frost_errcode_t frost_chan_unbind(frost_task_ctx_t* task_b);
 
 #endif /* _FROST_CHAN_H */

@@ -103,7 +103,7 @@ frost_errcode_t frost_schedule_tasks() {
         // dont unfreeze case
         if(!_curctx->chan.ref || _curctx->chan.ref->notify_cnt <= 0) {
           if(!_curctx->chan.ref) {
-            frost_log(TAG, "task[%p] set 'unfreeze_by_chan_write' but no channel allocated", _curctx);
+            //frost_log(TAG, "task[%p] set 'unfreeze_by_chan_write' but no channel allocated", _curctx);
           }
           goto next;
         }
