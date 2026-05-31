@@ -1,10 +1,9 @@
 ## ❄ frost
 
 ❄ Frost ❄ is a cooperative asynchronous task scheduler, uses a deadline-derived urgency
-score to gradually promote tasks that are closer to, or already past,
-their scheduled execution time.  
+score to gradually promote tasks that are closer to, or already past, their scheduled execution time.  
 This makes it similar in spirit to a lightweight soft-EDF scheduler,
-but implemented as a portable cooperative event loop.
+but implemented as a portable cooperative event loop.  
  - cooperative scheduling
  - deadline/urgency-based task promotion
  - channel-triggered task wakeup
@@ -21,7 +20,7 @@ it features an advanced task scheduler capable of running three types of tasks:
 [![license](https://img.shields.io/badge/LICENSE-MIT-blue)](./blob/main/LICENSE)
 
 ## ❄ ToDo
-- [x] preemptive scheduling
+- [x] EDF scheduling
 - [x] unfreeze task by channel write
 - [] Fix await
 
