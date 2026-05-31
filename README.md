@@ -1,14 +1,18 @@
 ## ❄ frost
 
-❄ Frost ❄ is an asynchronous multi-tasking library for embedded hardware, Here are its key features:
-- await/async function calls
-- task local storage
-- go-lang like channel
-- preemptive scheduling
-- low memory usage, easy to port
-
+❄ Frost ❄ is a cooperative asynchronous task scheduler, uses a deadline-derived urgency
+score to gradually promote tasks that are closer to, or already past,
+their scheduled execution time.  
+This makes it similar in spirit to a lightweight soft-EDF scheduler,
+but implemented as a portable cooperative event loop.
+ - cooperative scheduling
+ - deadline/urgency-based task promotion
+ - channel-triggered task wakeup
+ - task local storage
+ - lightweight awaiter primitives
+ 
 Frost does not interfere with task execution, offering better cross-platform compatibility,  
-it features an advanced task scheduler capable of running two types of tasks:  
+it features an advanced task scheduler capable of running three types of tasks:  
  - **one-shot**: task runs one shot, then deletes itself
  - **periodic**: task runs periodically, with a given period (setInterval)
  - **awaken-by-chan-write**: awake the task when channel is not empty, otherwise turn into freeze state
@@ -19,6 +23,7 @@ it features an advanced task scheduler capable of running two types of tasks:
 ## ❄ ToDo
 - [x] preemptive scheduling
 - [x] unfreeze task by channel write
+- [] Fix await
 
 ## ❄ Example
 

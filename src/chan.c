@@ -246,7 +246,7 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
  *
  * @param pack the chan_pack_t pointer on the stack
  */
-frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
+frost_errcode_t frost_chan_read(chan_pack_t** pack) {
 
   frost_task_ctx_t* _task_a = __get_task_ctx(NULL);
   if(!_task_a || !_task_a->chan.ref) {
@@ -256,7 +256,6 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
   // no message came in
   if(_task_a->chan.ref->notify_cnt == 0) {
     if(pack != NULL) *pack = NULL;
-    if(ctrl != NULL) *ctrl = frost_chanctl_ok;
     return frost_err_eof;
   }
 
@@ -287,10 +286,17 @@ frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl) {
 
   frost_log(TAG, "chanpak[%p]: read flow '%s' read from channel, __ref_count = %d", _pack, _task_a->name, _pack->__ref_count);
 
-  if(pack) *pack = _pack;
-  if(ctrl) *ctrl = _pack->ctrl;
+  switch(_pack->ctrl) {
+    case frost_chanctl_ok:
+      if(pack) *pack = _pack;
+      return frost_err_ok;
 
-  return frost_err_ok;
+    default:
+    case frost_chanctl_close:
+      frost_log(TAG, "chanpak[%p]: [control] channel closed");
+      frost_chan_free_pack(_pack);
+      return frost_err_closed;
+  }
 }
 
 /**
@@ -412,7 +418,7 @@ frost_errcode_t frost_chan_destroy_ex(frost_task_ctx_t* task_a) {
     frost_log(TAG, "task[%p]: has unread channel packs, do clean", _task_a);
 
     chan_pack_t* _pack = NULL;
-    while(frost_chan_read(&_pack, NULL) != frost_err_eof) {
+    while(frost_chan_read(&_pack) != frost_err_eof) {
       frost_chan_free_pack(_pack);
     }
   }
@@ -470,12 +476,17 @@ frost_errcode_t frost_chan_crossbind(frost_task_ctx_t* task_b) {
  * MARK: frost_chan_is_allocated
  * @brief is channel allocated
  *
- * @param task task context
  */
 bool frost_chan_is_allocated() {
   return frost_chan_is_allocated_ex(NULL);
 }
 
+/**
+ * MARK: frost_chan_unbind
+ * @brief unbind channel
+ *
+ * @param task_b task context
+ */
 frost_errcode_t frost_chan_unbind(frost_task_ctx_t* task_b) {
   return frost_chan_unbind_ex(NULL, task_b);
 }

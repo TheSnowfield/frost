@@ -10,6 +10,8 @@
 #ifndef _FROST_CHAN_H
 #define _FROST_CHAN_H
 
+#include <string.h>
+
 /**
  * @brief allocate channel
  *
@@ -72,20 +74,20 @@ frost_errcode_t frost_chan_write_ex(frost_task_ctx_t* task_b, chan_pack_t* pack)
   frost_chan_write_ex(NULL, &(chan_pack_t) { \
     .ctrl = frost_chanctl_ok, \
     .data = (void *)(T), \
-    .data_len = _Generic(T, \
-      char *: strlen(T), \
+    .data_len = _Generic((T), \
+      char *: strlen((char *)(T)), \
+      const char *: strlen((const char *)(T)), \
       default: sizeof(*(T)) \
     ), \
   })
 
 /**
- * @brief read channel pack
+ * @brief read channel pack. read a pack from channel.
  *
  * @param pack channel pack pointer
- * @param ctrl when frost_chanctl_eof meant to close the channel.
- * in this case channel pack pointer is **invalid** do not use. otherwize frost_chanctl_ok
+ *
  */
-frost_errcode_t frost_chan_read(chan_pack_t** pack, frost_chanctl_t* ctrl);
+frost_errcode_t frost_chan_read(chan_pack_t** pack);
 
 /**
  * @brief unbind all channels, clear internal ringbuffer, and destroy the channel.
