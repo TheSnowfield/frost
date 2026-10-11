@@ -59,7 +59,11 @@ static void __chan_pack_free(chan_pack_t* retained) {
 */
 frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
 
-  if(task->chan.ref != NULL) {
+  frost_task_ctx_t* _task = __get_task_ctx(task); {
+    if(!_task) return frost_err_invalid_parameter;
+  }
+
+  if(_task->chan.ref != NULL) {
     return frost_err_invalid_parameter;
   }
 
@@ -77,12 +81,12 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
   }
 
   // initialize chan parameters
-  task->chan.ref = _chan; {
+  _task->chan.ref = _chan; {
     _chan->notify_cnt = 0;
     _chan->header = _rb_header;
   }
 
-  frost_log(TAG, "chan rb[%p] has allocated for task '%s'[%p]", _rb_header, task->name, task);
+  frost_log(TAG, "chan rb[%p] has allocated for task '%s'[%p]", _rb_header, _task->name, _task);
 
   return frost_err_ok;
 }
@@ -97,15 +101,23 @@ frost_errcode_t frost_chan_alloc_ex(frost_task_ctx_t* task) {
  */
 frost_errcode_t frost_chan_bind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
 
+  frost_task_ctx_t* _task_a = __get_task_ctx(task_a); {
+    if(!_task_a || !task_b) return frost_err_invalid_parameter;
+  }
+
+  if(!task_b->chan.ref) {
+    return frost_err_invalid_chan;
+  }
+
   // if not bound yet
-  if(!task_a->chan.bind) {
-    if(!frost_ok(list_create(&task_a->chan.bind))) {
+  if(!_task_a->chan.bind) {
+    if(!frost_ok(list_create(&_task_a->chan.bind))) {
       return frost_err_out_of_memory;
     }
   }
 
   // add to task bind list
-  if(!frost_ok(list_put(task_a->chan.bind, (void*)&task_b, sizeof(task_b), NULL))) {
+  if(!frost_ok(list_put(_task_a->chan.bind, (void*)&task_b, sizeof(task_b), NULL))) {
     return frost_err_out_of_memory;
   }
 
@@ -121,20 +133,24 @@ frost_errcode_t frost_chan_bind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* t
  * @param task_b task B context
  */
 frost_errcode_t frost_chan_crossbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
-  
+  frost_task_ctx_t* _task_a = __get_task_ctx(task_a); {
+    if(!_task_a || !task_b) return frost_err_invalid_parameter;
+  }
+
   // bind A -> B
-  frost_errcode_t _ret_a = frost_chan_bind_ex(task_a, task_b);
+  frost_errcode_t _ret_a = frost_chan_bind_ex(_task_a, task_b);
   if(!frost_ok(_ret_a)) return _ret_a;
 
   // bind B -> A
-  frost_errcode_t _ret_b = frost_chan_bind_ex(task_b, task_a);
+  frost_errcode_t _ret_b = frost_chan_bind_ex(task_b, _task_a);
   if(!frost_ok(_ret_b)) return _ret_b;
 
   return frost_err_ok;
 }
 
 bool frost_chan_is_allocated_ex(frost_task_ctx_t* task) {
-  return task->chan.ref != NULL;
+  frost_task_ctx_t* _task = __get_task_ctx(task);
+  return _task && _task->chan.ref != NULL;
 }
 
 /**
@@ -347,7 +363,11 @@ static bool __chan_get_bound_node(frost_task_ctx_t* task, frost_task_ctx_t* bind
  */
 frost_errcode_t frost_chan_unbind_ex(frost_task_ctx_t* task_a, frost_task_ctx_t* task_b) {
 
-  frost_task_ctx_t* _task_a = __get_task_ctx(NULL);
+  frost_task_ctx_t* _task_a = __get_task_ctx(task_a);
+  if(!task_b) {
+    return frost_err_invalid_parameter;
+  }
+
   if (!_task_a || !_task_a->chan.ref) {
     return frost_err_invalid_chan;
   }
